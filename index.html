@@ -48,7 +48,7 @@
     -webkit-user-select: none;
   }
 
-  /* ナビバー（スマホ対応） */
+  /* ナビバー */
   .apple-navbar {
     position: sticky;
     top: 0;
@@ -241,20 +241,8 @@
     text-align: center;
   }
 
-  /* 季節・週番号を左端にSticky固定 */
-  .sticky-left-season {
-    position: sticky;
-    left: 0;
-    z-index: 5;
-  }
-
-  .sticky-left-week {
-    position: sticky;
-    left: 36px;
-    z-index: 5;
-    border-right: 2px solid #94a3b8 !important;
-  }
-
+  .sticky-left-season { position: sticky; left: 0; z-index: 5; }
+  .sticky-left-week   { position: sticky; left: 36px; z-index: 5; border-right: 2px solid #94a3b8 !important; }
   thead th.sticky-left-season { z-index: 15; left: 0; }
   thead th.sticky-left-week   { z-index: 15; left: 36px; }
 
@@ -302,10 +290,7 @@
     padding: 4px 5px;
   }
 
-  .day-cell:active {
-    background-color: #e0f2fe !important;
-  }
-
+  .day-cell:active { background-color: #e0f2fe !important; }
   .sat-col { background-color: #f8faff; }
   .sun-col { background-color: #fff8f8; }
 
@@ -321,7 +306,6 @@
   .sat-lbl { color: #0284c7; font-weight: 800; }
   .sun-lbl { color: #dc2626; font-weight: 800; }
 
-  /* 当日（TODAY）ハイライト */
   .today-cell {
     outline: 3px solid #ef4444 !important;
     outline-offset: -2px;
@@ -400,9 +384,18 @@
     font-weight: 800;
   }
 
-  /* ===============================
-     スマホ対応ボトムシート風モーダル
-     =============================== */
+  .memo-cell {
+    outline: none;
+    cursor: text;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  .memo-cell:focus {
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1.5px #0284c7;
+  }
+
+  /* モーダル */
   .modal-overlay {
     display: none;
     position: fixed;
@@ -446,7 +439,6 @@
   .pos-header h3 { margin: 0; font-size: 14px; font-weight: 700; }
   .pos-date-badge { background: #334155; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
 
-  /* 注文グリッド（2列で押しやすい） */
   .pos-menu-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -526,7 +518,7 @@
   .btn-cancel { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
   .btn-confirm { background: #0284c7; color: #fff; }
 
-  /* 設定テーブル用 */
+  /* 設定モーダル */
   .setting-table-wrap {
     padding: 12px;
     background: #f8fafc;
@@ -748,6 +740,36 @@ function loadDrinkMenu() {
 }
 loadDrinkMenu();
 
+// ★ 記録データ（LocalStorage連動）
+let recordStore = {};
+function loadRecordStore() {
+  const saved = localStorage.getItem("my_calendar_records");
+  if (saved) {
+    try { recordStore = JSON.parse(saved); } catch(e) { recordStore = {}; }
+  } else {
+    recordStore = {};
+  }
+}
+function saveRecordStore() {
+  localStorage.setItem("my_calendar_records", JSON.stringify(recordStore));
+}
+loadRecordStore();
+
+// ★ メモデータ（LocalStorage連動）
+let memoStore = {};
+function loadMemoStore() {
+  const saved = localStorage.getItem("my_calendar_memos");
+  if (saved) {
+    try { memoStore = JSON.parse(saved); } catch(e) { memoStore = {}; }
+  } else {
+    memoStore = {};
+  }
+}
+function saveMemoStore() {
+  localStorage.setItem("my_calendar_memos", JSON.stringify(memoStore));
+}
+loadMemoStore();
+
 const seasonBlocks = [
   { name: "① 真冬期", span: 9, cls: "winter" },
   { name: "② 春・芽吹き期", span: 9, cls: "spring" },
@@ -776,7 +798,6 @@ function getFirstMondayOfYear(year) {
   return new Date(year, 0, 1 + daysUntilMonday);
 }
 
-const recordStore = {};
 let currentTargetCell = null;
 let currentTempOrders = {};
 let currentIsRest = false;
@@ -888,6 +909,11 @@ function buildTable(year) {
         tdDay.appendChild(lbl);
         tdDay.appendChild(content);
 
+        // 保存された記録を描画
+        if (recordStore[dateKey]) {
+          renderDayCell(tdDay, recordStore[dateKey]);
+        }
+
         tdDay.addEventListener("click", () => openTouchPanel(tdDay));
         tr.appendChild(tdDay);
       }
@@ -907,14 +933,28 @@ function buildTable(year) {
       tdCost.className = "stat-cell cost-val";
       tr.appendChild(tdCost);
 
+      const memoKey = `${year}-w${wIdx}`;
       const tdMemo = document.createElement("td");
       tdMemo.contentEditable = "true";
+      tdMemo.className = "memo-cell";
       tdMemo.style.fontSize = "10px";
       tdMemo.style.fontWeight = "600";
       tdMemo.style.color = "var(--text-primary)";
+      tdMemo.textContent = memoStore[memoKey] || "";
+
+      // メモ入力時に自動保存
+      tdMemo.addEventListener("input", () => {
+        memoStore[memoKey] = tdMemo.textContent;
+        saveMemoStore();
+      });
+
       tr.appendChild(tdMemo);
 
       tbody.appendChild(tr);
+
+      // 週集計初期化
+      updateWeekSummary(wIdx);
+
       currentWeekIndex++;
     }
   });
@@ -1046,6 +1086,9 @@ document.getElementById("btnModalSave").addEventListener("click", () => {
     isRest: currentIsRest,
     orders: { ...currentTempOrders }
   };
+
+  // ★ LocalStorageに自動保存
+  saveRecordStore();
 
   renderDayCell(currentTargetCell, recordStore[dateKey]);
   updateWeekSummary(wIdx);
