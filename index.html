@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>52 Weeks Life Management & Touch Order</title>
+<style>
+  :root {
+    --system-bg: #eef2f6;
+    --card-bg: #ffffff;
+    --card-border: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --apple-blue: #0284c7;
+    --apple-green: #16a34a;
+    --apple-orange: #ea580c;
+    
+    /* 季節カラー */
+    --color-winter: #0284c7;
+    --color-spring: #16a34a;
+    --color-early-summer: #0891b2;
+    --color-summer: #d97706;
+    --color-autumn: #dc2626;
+    --color-early-winter: #9333ea;
+
+    /* 季節ごとの背景色 */
+    --bg-winter: #e0f2fe;
+    --bg-spring: #dcfce7;
+    --bg-early-summer: #cffafe;
+    --bg-summer: #fef3c7;
+    --bg-autumn: #fee2e2;
+    --bg-early-winter: #f3e8ff;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro JP", "SF Pro Text", "Hiragino Kaku Gothic ProN", Arial, sans-serif;
+    margin: 0;
+    padding: 0 0 60px 0;
+    background-color: var(--system-bg);
+    color: var(--text-primary);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ナビバー（スマホ対応） */
+  .apple-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    border-bottom: 2px solid var(--card-border);
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .nav-title {
+    font-size: 15px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #0f172a;
+  }
+
+  .nav-title span.badge {
+    font-size: 10px;
+    background: #0284c7;
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  .nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-settings-nav {
+    background: #f1f5f9;
+    border: 1.5px solid #94a3b8;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+  }
+
+  .controls-select {
+    appearance: none;
+    background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath fill='%23475569' d='M0 0l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right 8px center;
+    border: 1.5px solid #94a3b8;
+    border-radius: 6px;
+    padding: 5px 22px 5px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .container {
+    width: 100%;
+    margin: 10px auto 0;
+    padding: 0 8px;
+  }
+
+  /* ダッシュボードカード */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .apple-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--card-border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .card-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .card-metric {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .track-wrap {
+    height: 20px;
+    border-radius: 5px;
+    background: #cbd5e1;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    border: 1px solid #94a3b8;
+  }
+
+  .season-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 800;
+    color: #ffffff;
+    height: 100%;
+  }
+
+  .seg-winter       { background: var(--color-winter); }
+  .seg-spring       { background: var(--color-spring); }
+  .seg-early-summer { background: var(--color-early-summer); }
+  .seg-summer       { background: var(--color-summer); }
+  .seg-autumn       { background: var(--color-autumn); }
+  .seg-early-winter { background: var(--color-early-winter); }
+
+  .unreached-mask {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    background: rgba(241, 245, 249, 0.85);
+    border-left: 3px solid #ef4444;
+    pointer-events: none;
+    transition: width 0.3s ease;
+  }
+
+  .progress-fill-life {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a 0%, #0284c7 100%);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    font-weight: 700;
+  }
+
+  /* テーブル */
+  .table-card {
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1.5px solid var(--card-border);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 65vh;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 880px;
+    font-size: 11px;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    background: #1e293b;
+    color: #ffffff;
+    z-index: 10;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 8px 4px;
+    border-bottom: 2px solid #0f172a;
+    border-right: 1px solid #334155;
+    text-align: center;
+  }
+
+  /* 季節・週番号を左端にSticky固定 */
+  .sticky-left-season {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+  }
+
+  .sticky-left-week {
+    position: sticky;
+    left: 36px;
+    z-index: 5;
+    border-right: 2px solid #94a3b8 !important;
+  }
+
+  thead th.sticky-left-season { z-index: 15; left: 0; }
+  thead th.sticky-left-week   { z-index: 15; left: 36px; }
+
+  td {
+    padding: 4px;
+    vertical-align: top;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  .winter       { background-color: var(--bg-winter); }
+  .spring       { background-color: var(--bg-spring); }
+  .early-summer { background-color: var(--bg-early-summer); }
+  .summer       { background-color: var(--bg-summer); }
+  .autumn       { background-color: var(--bg-autumn); }
+  .early-winter { background-color: var(--bg-early-winter); }
+
+  .season-cell {
+    font-weight: 800;
+    text-align: center;
+    writing-mode: vertical-rl;
+    letter-spacing: 2px;
+    padding: 6px 2px;
+    font-size: 11px;
+    color: #0f172a;
+    background: #ffffff;
+  }
+
+  .week-cell {
+    text-align: center;
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+    vertical-align: middle;
+    background: #ffffff;
+    padding: 4px 6px;
+  }
+
+  .day-cell {
+    min-width: 78px;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+    padding: 4px 5px;
+  }
+
+  .day-cell:active {
+    background-color: #e0f2fe !important;
+  }
+
+  .sat-col { background-color: #f8faff; }
+  .sun-col { background-color: #fff8f8; }
+
+  .date-lbl {
+    font-size: 10px;
+    font-weight: 800;
+    color: #334155;
+    margin-bottom: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sat-lbl { color: #0284c7; font-weight: 800; }
+  .sun-lbl { color: #dc2626; font-weight: 800; }
+
+  /* 当日（TODAY）ハイライト */
+  .today-cell {
+    outline: 3px solid #ef4444 !important;
+    outline-offset: -2px;
+    background-color: #fffbeb !important;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4) !important;
+    position: relative;
+    z-index: 2;
+  }
+
+  .today-badge {
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 1px 3px;
+    border-radius: 3px;
+  }
+
+  .day-content {
+    min-height: 32px;
+    font-size: 10px;
+    line-height: 1.2;
+    pointer-events: none;
+  }
+
+  .order-pill {
+    display: block;
+    background: #e0e7ff;
+    color: #1e1b4b;
+    border: 1px solid #c7d2fe;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-size: 9px;
+    margin-top: 2px;
+    font-weight: 700;
+  }
+
+  .cost-pill {
+    color: #334155;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  .rest-badge {
+    display: inline-block;
+    background: #16a34a;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+
+  .stat-cell {
+    text-align: center;
+    font-weight: 700;
+    vertical-align: middle;
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  .alc-val { color: #d97706; font-weight: 800; }
+  .cost-val { color: #0284c7; font-weight: 800; }
+
+  tr.current-week-row {
+    outline: 2px solid #0284c7;
+    position: relative;
+  }
+  .now-badge {
+    background: #0284c7;
+    color: #fff;
+    font-size: 8px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-left: 2px;
+    font-weight: 800;
+  }
+
+  /* ===============================
+     スマホ対応ボトムシート風モーダル
+     =============================== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .pos-terminal {
+    background: #ffffff;
+    width: 100%;
+    max-width: 600px;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 88vh;
+    animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .pos-header {
+    background: #0f172a;
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .pos-header h3 { margin: 0; font-size: 14px; font-weight: 700; }
+  .pos-date-badge { background: #334155; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+
+  /* 注文グリッド（2列で押しやすい） */
+  .pos-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px;
+    background: #f8fafc;
+    overflow-y: auto;
+    max-height: 50vh;
+  }
+
+  .menu-item-card {
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .item-title { font-weight: 800; font-size: 12px; color: #0f172a; }
+  .item-specs { font-size: 10px; color: #475569; font-weight: 600; }
+  .item-price { font-size: 12px; font-weight: 800; color: #0284c7; margin-top: 2px; }
+  .item-alc-tag { font-size: 10px; color: #d97706; font-weight: 700; }
+
+  .qty-counter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    padding: 2px;
+  }
+
+  .btn-qty {
+    width: 32px;
+    height: 32px;
+    border-radius: 5px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    font-size: 18px;
+    font-weight: 900;
+    color: #0f172a;
+    cursor: pointer;
+  }
+  .btn-qty:active { background: #cbd5e1; }
+
+  .qty-num { font-weight: 900; font-size: 13px; width: 22px; text-align: center; }
+
+  .pos-summary-bar {
+    background: #fff;
+    border-top: 1.5px solid #cbd5e1;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .summary-metrics { display: flex; justify-content: space-around; }
+  .metric-box { font-size: 10px; font-weight: 700; color: #475569; text-align: center; }
+  .metric-box b { display: block; font-size: 14px; font-weight: 900; }
+  .metric-box b.alc { color: #d97706; }
+  .metric-box b.cost { color: #0284c7; }
+
+  .pos-actions { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 6px; }
+  .btn-apple {
+    padding: 10px 6px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+  }
+  .btn-rest { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .btn-cancel { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+  .btn-confirm { background: #0284c7; color: #fff; }
+
+  /* 設定テーブル用 */
+  .setting-table-wrap {
+    padding: 12px;
+    background: #f8fafc;
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+
+  .setting-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+  }
+
+  .setting-table th {
+    background: #e2e8f0;
+    color: #1e293b;
+    padding: 6px 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .setting-table td {
+    padding: 4px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .setting-input {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .btn-del-item {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+    border-radius: 4px;
+    padding: 4px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .btn-add-row {
+    margin-top: 8px;
+    background: #ffffff;
+    border: 1.5px dashed #0284c7;
+    color: #0284c7;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<header class="apple-navbar">
+  <div class="nav-title">
+    <span>52W Life</span>
+    <span class="badge">POS</span>
+  </div>
+  <div class="nav-controls">
+    <button id="btnOpenSettings" class="btn-settings-nav">⚙️ 設定</button>
+    <select id="yearSelect" class="controls-select">
+      <option value="2026">2026年</option>
+      <option value="2027">2027年</option>
+      <option value="2025">2025年</option>
+      <option value="2024">2024年</option>
+    </select>
+  </div>
+</header>
+
+<div class="container">
+  <div class="dashboard-grid">
+    <div class="apple-card">
+      <div class="card-header">
+        <span class="card-label">Year Progress</span>
+        <span class="card-metric" id="yearProgressText">第--週 (0.0%)</span>
+      </div>
+      <div class="track-wrap">
+        <div class="season-seg seg-winter" style="flex: 9;">真冬</div>
+        <div class="season-seg seg-spring" style="flex: 9;">春</div>
+        <div class="season-seg seg-early-summer" style="flex: 5;">初夏</div>
+        <div class="season-seg seg-summer" style="flex: 12;">盛夏</div>
+        <div class="season-seg seg-autumn" style="flex: 9;">秋</div>
+        <div class="season-seg seg-early-winter" style="flex: 8;">初冬</div>
+        <div id="unreached-overlay" class="unreached-mask" style="width: 100%;"></div>
+      </div>
+      <div class="card-footer">
+        <span id="yearElapsedSub">経過: 0週</span>
+        <span id="yearRemainSub">残り: 52週</span>
+      </div>
+    </div>
+
+    <div class="apple-card">
+      <div class="card-header">
+        <span class="card-label">Countdown to 60</span>
+        <span class="card-metric" id="lifeProgressText">残り --- 日</span>
+      </div>
+      <div class="track-wrap">
+        <div class="progress-fill-life" id="lifeProgressBar" style="width: 0%;"></div>
+      </div>
+      <div class="card-footer">
+        <span id="lifeWeekSub">残り: --- 週</span>
+        <span id="lifeCardSub">手札: ---</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div id="tableScrollContainer" class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="sticky-left-season" style="width: 36px;">季節</th>
+            <th class="sticky-left-week" style="width: 65px;">週番号</th>
+            <th style="width: 80px;">日付範囲</th>
+            <th>月曜日</th>
+            <th>火曜日</th>
+            <th>水曜日</th>
+            <th>木曜日</th>
+            <th>金曜日</th>
+            <th class="sat-col" style="color: #60a5fa;">土曜日</th>
+            <th class="sun-col" style="color: #f87171;">日曜日</th>
+            <th style="width: 45px;">休肝</th>
+            <th style="width: 65px;">純アル</th>
+            <th style="width: 65px;">酒代</th>
+            <th style="width: 90px;">メモ</th>
+          </tr>
+        </thead>
+        <tbody id="calBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="touchModal" class="modal-overlay">
+  <div class="pos-terminal">
+    <div class="pos-header">
+      <h3>🍺 ドリンク注文</h3>
+      <span id="modalDateBadge" class="pos-date-badge">01/05 (月)</span>
+    </div>
+    <div id="posMenuGrid" class="pos-menu-grid"></div>
+    <div class="pos-summary-bar">
+      <div class="summary-metrics">
+        <div class="metric-box">純アルコール<b id="summaryAlc" class="alc">0.0g</b></div>
+        <div class="metric-box">お酒代合計<b id="summaryCost" class="cost">¥0</b></div>
+      </div>
+      <div class="pos-actions">
+        <button id="btnModalRest" class="btn-apple btn-rest">🌱 休肝日</button>
+        <button id="btnModalCancel" class="btn-apple btn-cancel">戻る</button>
+        <button id="btnModalSave" class="btn-apple btn-confirm">確定反映</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="settingsModal" class="modal-overlay">
+  <div class="pos-terminal">
+    <div class="pos-header">
+      <h3>⚙️ メニュー・価格設定</h3>
+      <span class="pos-date-badge">編集</span>
+    </div>
+    <div class="setting-table-wrap">
+      <table class="setting-table">
+        <thead>
+          <tr>
+            <th style="width: 32%;">商品名</th>
+            <th style="width: 20%;">容量ml</th>
+            <th style="width: 18%;">度数%</th>
+            <th style="width: 20%;">価格円</th>
+            <th style="width: 10%;">削除</th>
+          </tr>
+        </thead>
+        <tbody id="settingTableBody"></tbody>
+      </table>
+      <button id="btnAddMenuRow" class="btn-add-row">＋ 新しいお酒を追加</button>
+    </div>
+    <div class="pos-summary-bar">
+      <div class="pos-actions" style="grid-template-columns: 1fr 1fr;">
+        <button id="btnSettingsCancel" class="btn-apple btn-cancel">キャンセル</button>
+        <button id="btnSettingsSave" class="btn-apple btn-confirm">設定保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_DRINK_MENU = [
+  { id: "beer_350",   name: "生ビール・缶", ml: 350, abv: 5.0,  price: 220 },
+  { id: "beer_500",   name: "ロング缶",     ml: 500, abv: 5.0,  price: 290 },
+  { id: "highball",   name: "角ハイボール", ml: 350, abv: 7.0,  price: 190 },
+  { id: "strong",     name: "ストロング",   ml: 350, abv: 9.0,  price: 160 },
+  { id: "lemon_sour", name: "こだわりレモン",ml: 350, abv: 5.0,  price: 160 },
+  { id: "wine_glass", name: "ワイン",       ml: 120, abv: 12.0, price: 350 },
+  { id: "sake_1go",   name: "日本酒 (1合)", ml: 180, abv: 15.0, price: 450 },
+  { id: "shochu_rok", name: "焼酎ロック",   ml: 100, abv: 25.0, price: 300 },
+  { id: "whisky_s",   name: "ウイスキーS",  ml: 30,  abv: 40.0, price: 350 }
+];
+
+let DRINK_MENU = [];
+function loadDrinkMenu() {
+  const saved = localStorage.getItem("my_drink_menu");
+  if (saved) {
+    try { DRINK_MENU = JSON.parse(saved); } catch(e) { DRINK_MENU = [...DEFAULT_DRINK_MENU]; }
+  } else {
+    DRINK_MENU = [...DEFAULT_DRINK_MENU];
+  }
+  DRINK_MENU.forEach(item => {
+    item.alc = parseFloat(((item.ml * (item.abv / 100)) * 0.8).toFixed(1));
+    item.spec = `${item.ml}ml (${item.abv}%)`;
+  });
+}
+loadDrinkMenu();
+
+const seasonBlocks = [
+  { name: "① 真冬期", span: 9, cls: "winter" },
+  { name: "② 春・芽吹き期", span: 9, cls: "spring" },
+  { name: "③ 初夏・新緑期", span: 5, cls: "early-summer" },
+  { name: "④ 梅雨・盛夏期", span: 12, cls: "summer" },
+  { name: "⑤ 秋・収穫期", span: 9, cls: "autumn" },
+  { name: "⑥ 初冬・年の瀬期", span: 8, cls: "early-winter" }
+];
+
+const weeksData = Array.from({length: 52}, (_, i) => ({ w: `第${pad2(i + 1)}週` }));
+weeksData[11].w += "(春分)";
+weeksData[17].w += "(GW)";
+weeksData[25].w += "(半期)";
+weeksData[31].w += "(お盆)";
+weeksData[36].w += "(SW)";
+weeksData[37].w += "(SW)";
+weeksData[38].w += "(秋分)";
+weeksData[51].w += "(年末)";
+
+function pad2(n) { return n.toString().padStart(2, '0'); }
+
+function getFirstMondayOfYear(year) {
+  const jan1 = new Date(year, 0, 1);
+  const day = jan1.getDay();
+  const daysUntilMonday = (day === 1) ? 0 : (8 - day) % 7;
+  return new Date(year, 0, 1 + daysUntilMonday);
+}
+
+const recordStore = {};
+let currentTargetCell = null;
+let currentTempOrders = {};
+let currentIsRest = false;
+
+function updateProgressBars(year, currentWeekIdx) {
+  const now = new Date();
+  let displayWeek = (currentWeekIdx >= 0) ? currentWeekIdx + 1 : (year < now.getFullYear() ? 52 : 0);
+  const pct = ((displayWeek / 52) * 100).toFixed(1);
+  const unreachedPct = (100 - (displayWeek / 52) * 100).toFixed(1);
+  const remainWeeks = 52 - displayWeek;
+
+  document.getElementById("yearProgressText").textContent = `第${pad2(displayWeek)}週 (${pct}%)`;
+  document.getElementById("unreached-overlay").style.width = `${unreachedPct}%`;
+  document.getElementById("yearElapsedSub").textContent = `経過: ${displayWeek}週`;
+  document.getElementById("yearRemainSub").textContent = `残り: ${remainWeeks}週`;
+
+  const birth = new Date(1969, 8, 28);
+  const target = new Date(2029, 8, 28);
+  const totalDays = (target - birth) / (1000 * 60 * 60 * 24);
+  const remainDays = Math.max(0, Math.ceil((target - now) / (1000 * 60 * 60 * 24)));
+  const elapsedDays = totalDays - remainDays;
+  const lifePct = Math.min(100, Math.max(0, ((elapsedDays / totalDays) * 100))).toFixed(1);
+
+  const rWeeks = Math.floor(remainDays / 7);
+  const decks = Math.floor(rWeeks / 52);
+  const remW = rWeeks % 52;
+
+  document.getElementById("lifeProgressText").textContent = `残り ${remainDays.toLocaleString()} 日`;
+  document.getElementById("lifeProgressBar").style.width = `${lifePct}%`;
+  document.getElementById("lifeWeekSub").textContent = `残り: ${rWeeks} 週`;
+  document.getElementById("lifeCardSub").textContent = `手札: ${decks}組＋${remW}週`;
+}
+
+function buildTable(year) {
+  const tbody = document.getElementById("calBody");
+  tbody.innerHTML = "";
+
+  const startMonday = getFirstMondayOfYear(year);
+  let currentWeekIndex = 0;
+  const now = new Date();
+  const todayKey = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+  let activeCurrentWeek = -1;
+
+  seasonBlocks.forEach(block => {
+    for (let i = 0; i < block.span; i++) {
+      const wIdx = currentWeekIndex;
+      const data = weeksData[wIdx];
+      const tr = document.createElement("tr");
+      tr.className = block.cls;
+
+      const weekMon = new Date(startMonday);
+      weekMon.setDate(startMonday.getDate() + wIdx * 7);
+      const weekSun = new Date(weekMon);
+      weekSun.setDate(weekMon.getDate() + 6);
+      weekSun.setHours(23, 59, 59, 999);
+
+      const isCurrentWeek = (now >= weekMon && now <= weekSun);
+      if (isCurrentWeek) {
+        tr.classList.add("current-week-row");
+        activeCurrentWeek = wIdx;
+      }
+
+      if (i === 0) {
+        const tdSeason = document.createElement("td");
+        tdSeason.className = `season-cell sticky-left-season`;
+        tdSeason.rowSpan = block.span;
+        tdSeason.textContent = block.name;
+        tr.appendChild(tdSeason);
+      }
+
+      const tdW = document.createElement("td");
+      tdW.className = "week-cell sticky-left-week";
+      tdW.innerHTML = data.w + (isCurrentWeek ? '<span class="now-badge">今週</span>' : '');
+      tr.appendChild(tdW);
+
+      const m1 = pad2(weekMon.getMonth() + 1);
+      const d1 = pad2(weekMon.getDate());
+      const m2 = pad2(weekSun.getMonth() + 1);
+      const d2 = pad2(weekSun.getDate());
+
+      const tdRange = document.createElement("td");
+      tdRange.className = "week-cell";
+      tdRange.style.fontSize = "10px";
+      tdRange.textContent = `${m1}/${d1}〜${m2}/${d2}`;
+      tr.appendChild(tdRange);
+
+      for (let d = 0; d < 7; d++) {
+        const curDate = new Date(weekMon);
+        curDate.setDate(weekMon.getDate() + d);
+        const dateKey = `${curDate.getFullYear()}-${pad2(curDate.getMonth()+1)}-${pad2(curDate.getDate())}`;
+        const isToday = (dateKey === todayKey);
+
+        const tdDay = document.createElement("td");
+        tdDay.className = `day-cell ${d === 5 ? 'sat-col' : d === 6 ? 'sun-col' : ''} ${isToday ? 'today-cell' : ''}`;
+        tdDay.dataset.dateKey = dateKey;
+        tdDay.dataset.weekIdx = wIdx;
+        tdDay.dataset.dateDisplay = `${pad2(curDate.getMonth()+1)}/${pad2(curDate.getDate())} (${['月','火','水','木','金','土','日'][d]})`;
+
+        const lbl = document.createElement("div");
+        lbl.className = `date-lbl ${d === 5 ? 'sat-lbl' : d === 6 ? 'sun-lbl' : ''}`;
+        
+        let todayBadgeHtml = isToday ? '<span class="today-badge">TODAY</span>' : '';
+        lbl.innerHTML = `<span>${pad2(curDate.getMonth() + 1)}/${pad2(curDate.getDate())}</span>${todayBadgeHtml}`;
+
+        const content = document.createElement("div");
+        content.className = "day-content";
+        content.id = `content-${dateKey}`;
+
+        tdDay.appendChild(lbl);
+        tdDay.appendChild(content);
+
+        tdDay.addEventListener("click", () => openTouchPanel(tdDay));
+        tr.appendChild(tdDay);
+      }
+
+      const tdRest = document.createElement("td");
+      tdRest.id = `rest-stat-${wIdx}`;
+      tdRest.className = "stat-cell";
+      tr.appendChild(tdRest);
+
+      const tdAlc = document.createElement("td");
+      tdAlc.id = `alc-stat-${wIdx}`;
+      tdAlc.className = "stat-cell alc-val";
+      tr.appendChild(tdAlc);
+
+      const tdCost = document.createElement("td");
+      tdCost.id = `cost-stat-${wIdx}`;
+      tdCost.className = "stat-cell cost-val";
+      tr.appendChild(tdCost);
+
+      const tdMemo = document.createElement("td");
+      tdMemo.contentEditable = "true";
+      tdMemo.style.fontSize = "10px";
+      tdMemo.style.fontWeight = "600";
+      tdMemo.style.color = "var(--text-primary)";
+      tr.appendChild(tdMemo);
+
+      tbody.appendChild(tr);
+      currentWeekIndex++;
+    }
+  });
+
+  updateProgressBars(year, activeCurrentWeek);
+  setTimeout(scrollToTodayCenter, 200);
+}
+
+function scrollToTodayCenter() {
+  const container = document.getElementById("tableScrollContainer");
+  const todayCell = document.querySelector(".today-cell");
+  const targetRow = document.querySelector("tr.current-week-row");
+  const targetElement = todayCell || targetRow;
+  
+  if (container && targetElement) {
+    const cRect = container.getBoundingClientRect();
+    const tRect = targetElement.getBoundingClientRect();
+
+    const currentScrollTop = container.scrollTop;
+    const targetTopRelative = tRect.top - cRect.top;
+    const newScrollTop = currentScrollTop + targetTopRelative - (container.clientHeight / 2) + (targetElement.clientHeight / 2);
+
+    const currentScrollLeft = container.scrollLeft;
+    const targetLeftRelative = tRect.left - cRect.left;
+    const newScrollLeft = currentScrollLeft + targetLeftRelative - (container.clientWidth / 2) + (targetElement.clientWidth / 2);
+
+    container.scrollTo({
+      top: Math.max(0, newScrollTop),
+      left: Math.max(0, newScrollLeft),
+      behavior: 'smooth'
+    });
+  }
+}
+
+const modal = document.getElementById("touchModal");
+const menuGrid = document.getElementById("posMenuGrid");
+
+function renderOrderMenuGrid() {
+  menuGrid.innerHTML = "";
+  DRINK_MENU.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "menu-item-card";
+    card.innerHTML = `
+      <div>
+        <div class="item-title">${item.name}</div>
+        <div class="item-specs">${item.spec}</div>
+        <div class="item-alc-tag">純アル: ${item.alc}g</div>
+        <div class="item-price">¥${item.price}</div>
+      </div>
+      <div class="qty-counter">
+        <button class="btn-qty" onclick="changeQty('${item.id}', -1)">−</button>
+        <span id="qty-${item.id}" class="qty-num">0</span>
+        <button class="btn-qty" onclick="changeQty('${item.id}', 1)">＋</button>
+      </div>
+    `;
+    menuGrid.appendChild(card);
+  });
+}
+
+function openTouchPanel(tdElement) {
+  currentTargetCell = tdElement;
+  const dateKey = tdElement.dataset.dateKey;
+  document.getElementById("modalDateBadge").textContent = tdElement.dataset.dateDisplay;
+
+  const record = recordStore[dateKey] || { isRest: false, orders: {} };
+  currentTempOrders = { ...record.orders };
+  currentIsRest = record.isRest;
+
+  DRINK_MENU.forEach(item => {
+    const qty = currentTempOrders[item.id] || 0;
+    const qEl = document.getElementById(`qty-${item.id}`);
+    if (qEl) qEl.textContent = qty;
+  });
+
+  calcModalSummary();
+  modal.classList.add("active");
+}
+
+function changeQty(itemId, delta) {
+  currentIsRest = false;
+  const current = currentTempOrders[itemId] || 0;
+  const next = Math.max(0, current + delta);
+  if (next === 0) delete currentTempOrders[itemId];
+  else currentTempOrders[itemId] = next;
+
+  const qEl = document.getElementById(`qty-${itemId}`);
+  if (qEl) qEl.textContent = next;
+  calcModalSummary();
+}
+
+function calcModalSummary() {
+  let totalAlc = 0;
+  let totalCost = 0;
+
+  if (!currentIsRest) {
+    for (const [id, qty] of Object.entries(currentTempOrders)) {
+      const item = DRINK_MENU.find(m => m.id === id);
+      if (item) {
+        totalAlc += item.alc * qty;
+        totalCost += item.price * qty;
+      }
+    }
+  }
+
+  document.getElementById("summaryAlc").textContent = `${totalAlc.toFixed(1)}g`;
+  document.getElementById("summaryCost").textContent = `¥${totalCost.toLocaleString()}`;
+}
+
+document.getElementById("btnModalRest").addEventListener("click", () => {
+  currentIsRest = true;
+  currentTempOrders = {};
+  DRINK_MENU.forEach(item => {
+    const qEl = document.getElementById(`qty-${item.id}`);
+    if (qEl) qEl.textContent = 0;
+  });
+  calcModalSummary();
+});
+
+document.getElementById("btnModalCancel").addEventListener("click", () => {
+  modal.classList.remove("active");
+});
+
+document.getElementById("btnModalSave").addEventListener("click", () => {
+  if (!currentTargetCell) return;
+  const dateKey = currentTargetCell.dataset.dateKey;
+  const wIdx = currentTargetCell.dataset.weekIdx;
+
+  recordStore[dateKey] = {
+    isRest: currentIsRest,
+    orders: { ...currentTempOrders }
+  };
+
+  renderDayCell(currentTargetCell, recordStore[dateKey]);
+  updateWeekSummary(wIdx);
+  modal.classList.remove("active");
+});
+
+function renderDayCell(td, record) {
+  const content = td.querySelector(".day-content");
+  content.innerHTML = "";
+
+  if (record.isRest) {
+    td.style.backgroundColor = "#dcfce7";
+    content.innerHTML = `<span class="rest-badge">🌱 休肝</span>`;
+    return;
+  }
+
+  td.style.backgroundColor = "";
+  let orderSummary = [];
+  let dayCost = 0;
+  let dayAlc = 0;
+
+  for (const [id, qty] of Object.entries(record.orders)) {
+    if (qty > 0) {
+      const item = DRINK_MENU.find(m => m.id === id);
+      if (item) {
+        orderSummary.push(`${item.name.slice(0, 3)}×${qty}`);
+        dayCost += item.price * qty;
+        dayAlc += item.alc * qty;
+      }
+    }
+  }
+
+  if (orderSummary.length > 0) {
+    content.innerHTML = `
+      <span class="order-pill">${orderSummary.join(",")}</span>
+      <span class="cost-pill">${dayAlc.toFixed(1)}g/¥${dayCost}</span>
+    `;
+  }
+}
+
+function updateWeekSummary(wIdx) {
+  const weekCells = document.querySelectorAll(`td.day-cell[data-week-idx="${wIdx}"]`);
+  let restCount = 0;
+  let weekAlc = 0;
+  let weekCost = 0;
+
+  weekCells.forEach(cell => {
+    const key = cell.dataset.dateKey;
+    const rec = recordStore[key];
+    if (rec) {
+      if (rec.isRest) {
+        restCount++;
+      } else {
+        for (const [id, qty] of Object.entries(rec.orders)) {
+          const item = DRINK_MENU.find(m => m.id === id);
+          if (item) {
+            weekAlc += item.alc * qty;
+            weekCost += item.price * qty;
+          }
+        }
+      }
+    }
+  });
+
+  const targetRest = document.getElementById(`rest-stat-${wIdx}`);
+  const targetAlc = document.getElementById(`alc-stat-${wIdx}`);
+  const targetCost = document.getElementById(`cost-stat-${wIdx}`);
+
+  if (targetRest) targetRest.textContent = restCount > 0 ? `${restCount}日` : "";
+  if (targetAlc) targetAlc.textContent = weekAlc > 0 ? `${weekAlc.toFixed(1)}g` : "";
+  if (targetCost) targetCost.textContent = weekCost > 0 ? `¥${weekCost.toLocaleString()}` : "";
+}
+
+/* メニュー設定モーダル */
+const settingsModal = document.getElementById("settingsModal");
+const settingTableBody = document.getElementById("settingTableBody");
+
+document.getElementById("btnOpenSettings").addEventListener("click", () => {
+  renderSettingsTable();
+  settingsModal.classList.add("active");
+});
+
+function renderSettingsTable() {
+  settingTableBody.innerHTML = "";
+  DRINK_MENU.forEach((item, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="text" class="setting-input s-name" value="${item.name}"></td>
+      <td><input type="number" class="setting-input s-ml" value="${item.ml}" min="1"></td>
+      <td><input type="number" class="setting-input s-abv" value="${item.abv}" step="0.1" min="0"></td>
+      <td><input type="number" class="setting-input s-price" value="${item.price}" min="0"></td>
+      <td style="text-align:center;"><button class="btn-del-item" onclick="deleteSettingRow(${idx})">✕</button></td>
+    `;
+    settingTableBody.appendChild(tr);
+  });
+}
+
+function deleteSettingRow(idx) {
+  DRINK_MENU.splice(idx, 1);
+  renderSettingsTable();
+}
+
+document.getElementById("btnAddMenuRow").addEventListener("click", () => {
+  DRINK_MENU.push({
+    id: `custom_${Date.now()}`,
+    name: "新ドリンク",
+    ml: 350,
+    abv: 5.0,
+    price: 200
+  });
+  renderSettingsTable();
+});
+
+document.getElementById("btnSettingsCancel").addEventListener("click", () => {
+  loadDrinkMenu();
+  settingsModal.classList.remove("active");
+});
+
+document.getElementById("btnSettingsSave").addEventListener("click", () => {
+  const rows = settingTableBody.querySelectorAll("tr");
+  const newMenu = [];
+
+  rows.forEach((row, i) => {
+    const name = row.querySelector(".s-name").value.trim() || `お酒${i+1}`;
+    const ml = parseFloat(row.querySelector(".s-ml").value) || 350;
+    const abv = parseFloat(row.querySelector(".s-abv").value) || 5.0;
+    const price = parseInt(row.querySelector(".s-price").value, 10) || 0;
+    const id = DRINK_MENU[i] ? DRINK_MENU[i].id : `item_${Date.now()}_${i}`;
+
+    newMenu.push({ id, name, ml, abv, price });
+  });
+
+  localStorage.setItem("my_drink_menu", JSON.stringify(newMenu));
+  loadDrinkMenu();
+  renderOrderMenuGrid();
+
+  for (let w = 0; w < 52; w++) { updateWeekSummary(w); }
+  document.querySelectorAll(".day-cell").forEach(cell => {
+    const key = cell.dataset.dateKey;
+    if (recordStore[key]) renderDayCell(cell, recordStore[key]);
+  });
+
+  settingsModal.classList.remove("active");
+});
+
+// 初期化
+const yearSelect = document.getElementById("yearSelect");
+const currentYearStr = new Date().getFullYear().toString();
+if ([...yearSelect.options].some(opt => opt.value === currentYearStr)) {
+  yearSelect.value = currentYearStr;
+}
+yearSelect.addEventListener("change", (e) => buildTable(parseInt(e.target.value, 10)));
+
+renderOrderMenuGrid();
+buildTable(parseInt(yearSelect.value, 10));
+</script>
+
+</body>
+</html>
