@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>52 Weeks Life Management & Touch Order</title>
+<title>52 Weeks Life Deck & Winds</title>
 <style>
   :root {
     --system-bg: #eef2f6;
@@ -15,21 +15,26 @@
     --apple-green: #16a34a;
     --apple-orange: #ea580c;
     
-    /* 季節カラー */
-    --color-winter: #0284c7;
-    --color-spring: #16a34a;
-    --color-early-summer: #0891b2;
-    --color-summer: #d97706;
-    --color-autumn: #dc2626;
-    --color-early-winter: #9333ea;
+    /* 各トランプブロックの薄いカレンダー背景色 */
+    --bg-card-a: #fef2f2;
+    --bg-card-2: #fff7ed;
+    --bg-card-3: #fef3c7;
+    --bg-card-4: #fef9c3;
+    --bg-card-5: #f7fee7;
+    --bg-card-6: #ecfdf5;
+    --bg-card-7: #ecfeff;
+    --bg-card-8: #f0f9ff;
+    --bg-card-9: #eff6ff;
+    --bg-card-10: #eef2ff;
+    --bg-card-j: #f5f3ff;
+    --bg-card-q: #fdf4ff;
+    --bg-card-k: #fdf2f8;
 
-    /* 季節ごとの背景色 */
-    --bg-winter: #e0f2fe;
-    --bg-spring: #dcfce7;
-    --bg-early-summer: #cffafe;
-    --bg-summer: #fef3c7;
-    --bg-autumn: #fee2e2;
-    --bg-early-winter: #f3e8ff;
+    /* 東南西北の風バッジ用カラー */
+    --color-wind-ton: #16a34a; /* 東：緑 */
+    --color-wind-nan: #dc2626; /* 南：赤 */
+    --color-wind-sha: #d97706; /* 西：金・橙 */
+    --color-wind-pei: #2563eb; /* 北：青 */
   }
 
   * {
@@ -73,11 +78,12 @@
 
   .nav-title span.badge {
     font-size: 10px;
-    background: #0284c7;
+    background: #0f172a;
     color: #ffffff;
     padding: 2px 6px;
     border-radius: 4px;
     font-weight: 700;
+    letter-spacing: 0.5px;
   }
 
   .nav-controls {
@@ -114,10 +120,10 @@
     padding: 0 8px;
   }
 
-  /* ダッシュボードカード */
+  /* ダッシュボード：左右横並び配置 */
   .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
     margin-bottom: 12px;
   }
@@ -125,81 +131,73 @@
   .apple-card {
     background: #ffffff;
     border-radius: 10px;
-    padding: 12px 14px;
+    padding: 10px 8px;
     border: 1.5px solid var(--card-border);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
   }
 
+  /* カードヘッダー */
   .card-header {
+    width: 100%;
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 6px;
+    flex-direction: column;
+    align-items: flex-start;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
   }
 
   .card-label {
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 800;
     color: var(--text-secondary);
     text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .card-metric {
-    font-size: 14px;
-    font-weight: 800;
+    font-size: 13px;
+    font-weight: 900;
     color: #0f172a;
+    margin-top: 1px;
   }
 
-  .track-wrap {
-    height: 20px;
-    border-radius: 5px;
-    background: #cbd5e1;
-    overflow: hidden;
+  /* 円グラフ用SVG＆コンテナスタイル（160px） */
+  .ring-container {
     position: relative;
-    display: flex;
-    border: 1px solid #94a3b8;
+    width: 160px;
+    height: 160px;
+    margin: 2px auto;
+  }
+  
+  .progress-ring {
+    transform: rotate(0deg);
   }
 
-  .season-seg {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 9px;
-    font-weight: 800;
-    color: #ffffff;
-    height: 100%;
-  }
-
-  .seg-winter       { background: var(--color-winter); }
-  .seg-spring       { background: var(--color-spring); }
-  .seg-early-summer { background: var(--color-early-summer); }
-  .seg-summer       { background: var(--color-summer); }
-  .seg-autumn       { background: var(--color-autumn); }
-  .seg-early-winter { background: var(--color-early-winter); }
-
-  .unreached-mask {
+  .ring-text {
     position: absolute;
-    top: 0; right: 0; bottom: 0;
-    background: rgba(241, 245, 249, 0.85);
-    border-left: 3px solid #ef4444;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-primary);
+    text-align: center;
     pointer-events: none;
-    transition: width 0.3s ease;
-  }
-
-  .progress-fill-life {
-    height: 100%;
-    background: linear-gradient(90deg, #16a34a 0%, #0284c7 100%);
-    border-radius: 4px;
-    transition: width 0.4s ease;
   }
 
   .card-footer {
     display: flex;
-    justify-content: space-between;
-    font-size: 11px;
+    justify-content: space-around;
+    width: 100%;
+    font-size: 10px;
     color: var(--text-secondary);
-    margin-top: 6px;
-    font-weight: 700;
+    margin-top: 4px;
+    font-weight: 750;
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 6px;
   }
 
   /* テーブル */
@@ -223,7 +221,7 @@
     border-collapse: separate;
     border-spacing: 0;
     width: 100%;
-    min-width: 880px;
+    min-width: 900px;
     font-size: 11px;
   }
 
@@ -241,6 +239,7 @@
     text-align: center;
   }
 
+  /* DECK・週番号を左端にSticky固定 */
   .sticky-left-season { position: sticky; left: 0; z-index: 5; }
   .sticky-left-week   { position: sticky; left: 36px; z-index: 5; border-right: 2px solid #94a3b8 !important; }
   thead th.sticky-left-season { z-index: 15; left: 0; }
@@ -253,22 +252,34 @@
     border-bottom: 1px solid #cbd5e1;
   }
 
-  .winter       { background-color: var(--bg-winter); }
-  .spring       { background-color: var(--bg-spring); }
-  .early-summer { background-color: var(--bg-early-summer); }
-  .summer       { background-color: var(--bg-summer); }
-  .autumn       { background-color: var(--bg-autumn); }
-  .early-winter { background-color: var(--bg-early-winter); }
+  /* カレンダー13ブロック背景色定義 */
+  .card-block-a  { background-color: var(--bg-card-a); }
+  .card-block-2  { background-color: var(--bg-card-2); }
+  .card-block-3  { background-color: var(--bg-card-3); }
+  .card-block-4  { background-color: var(--bg-card-4); }
+  .card-block-5  { background-color: var(--bg-card-5); }
+  .card-block-6  { background-color: var(--bg-card-6); }
+  .card-block-7  { background-color: var(--bg-card-7); }
+  .card-block-8  { background-color: var(--bg-card-8); }
+  .card-block-9  { background-color: var(--bg-card-9); }
+  .card-block-10 { background-color: var(--bg-card-10); }
+  .card-block-j  { background-color: var(--bg-card-j); }
+  .card-block-q  { background-color: var(--bg-card-q); }
+  .card-block-k  { background-color: var(--bg-card-k); }
 
+  /* DECKセル：直立する縦書き */
   .season-cell {
-    font-weight: 800;
+    font-weight: 900;
     text-align: center;
     writing-mode: vertical-rl;
+    text-orientation: upright;
+    -webkit-text-orientation: upright;
     letter-spacing: 2px;
-    padding: 6px 2px;
-    font-size: 11px;
+    padding: 8px 2px;
+    font-size: 13px;
     color: #0f172a;
     background: #ffffff;
+    border-right: 1px solid #cbd5e1;
   }
 
   .week-cell {
@@ -280,6 +291,28 @@
     background: #ffffff;
     padding: 4px 6px;
   }
+
+  td.sticky-left-week {
+    text-align: left !important;
+    padding-left: 8px !important;
+  }
+
+  /* 東南西北のバッジデザイン */
+  .wind-badge {
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 900;
+    color: #ffffff;
+    margin-right: 6px;
+    text-align: center;
+    min-width: 22px;
+  }
+  .wind-ton { background-color: var(--color-wind-ton); } /* 東 */
+  .wind-nan { background-color: var(--color-wind-nan); } /* 南 */
+  .wind-sha { background-color: var(--color-wind-sha); } /* 西 */
+  .wind-pei { background-color: var(--color-wind-pei); } /* 北 */
 
   .day-cell {
     min-width: 78px;
@@ -395,7 +428,7 @@
     box-shadow: inset 0 0 0 1.5px #0284c7;
   }
 
-  /* モーダル */
+  /* スマホ対応ボトムシート風モーダル */
   .modal-overlay {
     display: none;
     position: fixed;
@@ -583,8 +616,8 @@
 
 <header class="apple-navbar">
   <div class="nav-title">
-    <span>52W Life</span>
-    <span class="badge">POS</span>
+    <span>52W Life Deck</span>
+    <span class="badge">Cards & Winds</span>
   </div>
   <div class="nav-controls">
     <button id="btnOpenSettings" class="btn-settings-nav">⚙️ 設定</button>
@@ -599,37 +632,48 @@
 
 <div class="container">
   <div class="dashboard-grid">
+    <!-- 左右横並び1：年間手札進捗カード（13分割パイチャート風） -->
     <div class="apple-card">
       <div class="card-header">
-        <span class="card-label">Year Progress</span>
+        <span class="card-label">Year Deck Progress</span>
         <span class="card-metric" id="yearProgressText">第--週 (0.0%)</span>
       </div>
-      <div class="track-wrap">
-        <div class="season-seg seg-winter" style="flex: 9;">真冬</div>
-        <div class="season-seg seg-spring" style="flex: 9;">春</div>
-        <div class="season-seg seg-early-summer" style="flex: 5;">初夏</div>
-        <div class="season-seg seg-summer" style="flex: 12;">盛夏</div>
-        <div class="season-seg seg-autumn" style="flex: 9;">秋</div>
-        <div class="season-seg seg-early-winter" style="flex: 8;">初冬</div>
-        <div id="unreached-overlay" class="unreached-mask" style="width: 100%;"></div>
+      <div class="ring-container">
+        <svg class="progress-ring" width="160" height="160" id="yearSvg">
+          <!-- 背景土台 -->
+          <circle class="ring-bg" stroke="#f1f5f9" stroke-width="12" fill="transparent" r="44" cx="80" cy="80"/>
+          <!-- 動的に塗り分けられる13セグメントパイチャート -->
+          <g id="yearSlices"></g>
+          <!-- 外側13文字目盛り -->
+          <g id="yearTicks"></g>
+        </svg>
+        <div class="ring-text" style="font-size: 24px; opacity: 0.15; padding-top: 4px;">🃏</div>
       </div>
       <div class="card-footer">
-        <span id="yearElapsedSub">経過: 0週</span>
-        <span id="yearRemainSub">残り: 52週</span>
+        <span id="yearElapsedSub">経過: --週</span>
+        <span id="yearRemainSub">残り: --週</span>
       </div>
     </div>
 
+    <!-- 左右横並び2：人生カウントダウンカード（60分割パイチャート風） -->
     <div class="apple-card">
       <div class="card-header">
-        <span class="card-label">Countdown to 60</span>
+        <span class="card-label">Life Deck Progress</span>
         <span class="card-metric" id="lifeProgressText">残り --- 日</span>
       </div>
-      <div class="track-wrap">
-        <div class="progress-fill-life" id="lifeProgressBar" style="width: 0%;"></div>
+      <div class="ring-container">
+        <svg class="progress-ring" width="160" height="160" id="lifeSvg">
+          <circle class="ring-bg" stroke="#f1f5f9" stroke-width="12" fill="transparent" r="44" cx="80" cy="80"/>
+          <!-- 動的に塗り分けられる60セグメントクロノグラフ -->
+          <g id="lifeSlices"></g>
+          <!-- 外側60数値目盛り -->
+          <g id="lifeTicks"></g>
+        </svg>
+        <div class="ring-text" style="font-size: 24px; opacity: 0.15; padding-top: 4px;">⏳</div>
       </div>
       <div class="card-footer">
-        <span id="lifeWeekSub">残り: --- 週</span>
-        <span id="lifeCardSub">手札: ---</span>
+        <span id="lifeWeekSub">残り: ---週</span>
+        <span id="lifeCardSub">手札: ---組</span>
       </div>
     </div>
   </div>
@@ -639,8 +683,8 @@
       <table>
         <thead>
           <tr>
-            <th class="sticky-left-season" style="width: 36px;">季節</th>
-            <th class="sticky-left-week" style="width: 65px;">週番号</th>
+            <th class="sticky-left-season" style="width: 44px;">DECK</th>
+            <th class="sticky-left-week" style="width: 95px;">週番号</th>
             <th style="width: 80px;">日付範囲</th>
             <th>月曜日</th>
             <th>火曜日</th>
@@ -652,11 +696,24 @@
             <th style="width: 45px;">休肝</th>
             <th style="width: 65px;">純アル</th>
             <th style="width: 65px;">酒代</th>
-            <th style="width: 90px;">メモ</th>
+            <th style="width: 100px;">メモ</th>
           </tr>
         </thead>
         <tbody id="calBody"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ★最下部に追加：バックアップ・データ移行カード -->
+  <div class="apple-card" style="margin-top: 14px; align-items: stretch; padding: 12px; border-radius: 10px;">
+    <div class="card-label" style="text-align: left; margin-bottom: 6px;">💾 バックアップ & 端末間データ移行</div>
+    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600; line-height: 1.4;">
+      カレンダーに記録した全てのデータ（注文記録、お酒メニュー設定、週次メモ）をテキスト形式で保存・復元できます。スマホとPCでの同期や、ブラウザのデータ消失に備えたバックアップにご利用ください。
+    </div>
+    <textarea id="backupTextarea" placeholder="📤 バックアップ作成を押すと、ここに暗号化コードが出力・自動コピーされます。&#10;📥 復元（インポート）時は、保存したコードをここに貼り付けてください。" style="width: 100%; height: 80px; font-size: 10px; font-family: monospace; border: 1.5px solid var(--card-border); border-radius: 6px; padding: 6px; resize: none; background: #f8fafc; color: var(--text-primary); outline: none; margin-bottom: 8px;"></textarea>
+    <div style="display: flex; gap: 8px;">
+      <button id="btnExport" class="btn-apple btn-cancel" style="flex: 1.2; padding: 10px 0; font-weight: 800; font-size: 11px;">📤 バックアップ作成＆コピー</button>
+      <button id="btnImport" class="btn-apple btn-confirm" style="flex: 1; padding: 10px 0; font-weight: 800; font-size: 11px; background-color: var(--apple-blue);">📥 データを復元（反映）</button>
     </div>
   </div>
 </div>
@@ -740,7 +797,7 @@ function loadDrinkMenu() {
 }
 loadDrinkMenu();
 
-// ★ 記録データ（LocalStorage連動）
+// 記録データ
 let recordStore = {};
 function loadRecordStore() {
   const saved = localStorage.getItem("my_calendar_records");
@@ -755,7 +812,7 @@ function saveRecordStore() {
 }
 loadRecordStore();
 
-// ★ メモデータ（LocalStorage連動）
+// メモデータ
 let memoStore = {};
 function loadMemoStore() {
   const saved = localStorage.getItem("my_calendar_memos");
@@ -770,26 +827,51 @@ function saveMemoStore() {
 }
 loadMemoStore();
 
+// 季節ブロック ➔ トランプ13デックブロック
 const seasonBlocks = [
-  { name: "① 真冬期", span: 9, cls: "winter" },
-  { name: "② 春・芽吹き期", span: 9, cls: "spring" },
-  { name: "③ 初夏・新緑期", span: 5, cls: "early-summer" },
-  { name: "④ 梅雨・盛夏期", span: 12, cls: "summer" },
-  { name: "⑤ 秋・収穫期", span: 9, cls: "autumn" },
-  { name: "⑥ 初冬・年の瀬期", span: 8, cls: "early-winter" }
+  { name: "手札Ａ", span: 4, cls: "card-block-a" },
+  { name: "手札２", span: 4, cls: "card-block-2" },
+  { name: "手札３", span: 4, cls: "card-block-3" },
+  { name: "手札４", span: 4, cls: "card-block-4" },
+  { name: "手札５", span: 4, cls: "card-block-5" },
+  { name: "手札６", span: 4, cls: "card-block-6" },
+  { name: "手札７", span: 4, cls: "card-block-7" },
+  { name: "手札８", span: 4, cls: "card-block-8" },
+  { name: "手札９", span: 4, cls: "card-block-9" },
+  { name: "手札１０", span: 4, cls: "card-block-10" },
+  { name: "手札Ｊ", span: 4, cls: "card-block-j" },
+  { name: "手札Ｑ", span: 4, cls: "card-block-q" },
+  { name: "手札Ｋ", span: 4, cls: "card-block-k" }
 ];
 
-const weeksData = Array.from({length: 52}, (_, i) => ({ w: `第${pad2(i + 1)}週` }));
-weeksData[11].w += "(春分)";
-weeksData[17].w += "(GW)";
-weeksData[25].w += "(半期)";
-weeksData[31].w += "(お盆)";
-weeksData[36].w += "(SW)";
-weeksData[37].w += "(SW)";
-weeksData[38].w += "(秋分)";
-weeksData[51].w += "(年末)";
-
 function pad2(n) { return n.toString().padStart(2, '0'); }
+
+// 風（東南西北）のローテーションシンボル
+const windCycle = [
+  { char: "東", cls: "wind-ton" },
+  { char: "南", cls: "wind-nan" },
+  { char: "西", cls: "wind-sha" },
+  { char: "北", cls: "wind-pei" }
+];
+
+// 52週データの作成
+const weeksData = Array.from({length: 52}, (_, i) => {
+  const windInfo = windCycle[i % 4];
+  const windBadgeHtml = `<span class="wind-badge ${windInfo.cls}">${windInfo.char}</span>`;
+  
+  let anno = "";
+  if (i === 11) anno = " (春分)";
+  else if (i === 17) anno = " (GW)";
+  else if (i === 25) anno = " (半期)";
+  else if (i === 32) anno = " (お盆)";
+  else if (i === 38) anno = " (秋分)";
+  else if (i === 51) anno = " (年末)";
+
+  return { 
+    w: `${windBadgeHtml}第${pad2(i + 1)}週${anno}`,
+    rawText: `${windInfo.char} 第${pad2(i + 1)}週${anno}`
+  };
+});
 
 function getFirstMondayOfYear(year) {
   const jan1 = new Date(year, 0, 1);
@@ -802,37 +884,198 @@ let currentTargetCell = null;
 let currentTempOrders = {};
 let currentIsRest = false;
 
+// トランプ13ブロックカラー
+const cardColors = [
+  "#ef4444", // A: 赤
+  "#f97316", // 2: オレンジ
+  "#f59e0b", // 3: アンバー
+  "#eab308", // 4: イエロー
+  "#84cc16", // 5: ライム
+  "#10b981", // 6: エメラルド
+  "#06b6d4", // 7: シアン
+  "#0ea5e9", // 8: スカイ
+  "#3b82f6", // 9: ブルー
+  "#6366f1", // 10: インディゴ
+  "#8b5cf6", // J: バイオレット
+  "#d946ef", // Q: フクシャ
+  "#ec4899"  // K: ピンク
+];
+
+// 扇形スライス生成
+function drawProgressSlices(groupId, count, activePct, type) {
+  const g = document.getElementById(groupId);
+  if (!g) return;
+  g.innerHTML = "";
+
+  const cx = 80;
+  const cy = 80;
+  const r = 44;
+  const strokeWidth = 12;
+  const circumference = 2 * Math.PI * r; // 276.46
+  
+  const segmentLength = circumference / count;
+  const gap = count === 60 ? 0.4 : 1.2;
+  const dashArray = `${segmentLength - gap} ${circumference - (segmentLength - gap)}`;
+
+  for (let i = 0; i < count; i++) {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", cx);
+    circle.setAttribute("cy", cy);
+    circle.setAttribute("r", r);
+    circle.setAttribute("stroke-width", strokeWidth);
+    circle.setAttribute("fill", "transparent");
+    circle.setAttribute("stroke-dasharray", dashArray);
+    circle.setAttribute("stroke-dashoffset", -i * segmentLength);
+    circle.setAttribute("transform", "rotate(-90 80 80)");
+
+    const limitPct = (i / count) * 100;
+    const isActive = (limitPct <= activePct && activePct > 0);
+
+    let strokeColor = "#cbd5e1";
+
+    if (isActive) {
+      if (type === "year") {
+        strokeColor = cardColors[i];
+      } else {
+        const t = i / 60;
+        const redVal = Math.round(16 + (14 - 16) * t);
+        const greenVal = Math.round(185 + (165 - 185) * t);
+        const blueVal = Math.round(129 + (233 - 129) * t);
+        strokeColor = `rgb(${redVal}, ${greenVal}, ${blueVal})`;
+      }
+    } else {
+      strokeColor = "#f1f5f9";
+    }
+
+    circle.setAttribute("stroke", strokeColor);
+    g.appendChild(circle);
+  }
+}
+
+// 外側目盛り＆テキスト
+function drawProgressTicksAndLabels(groupId, count, activePct, color, type) {
+  const g = document.getElementById(groupId);
+  if (!g) return;
+  g.innerHTML = "";
+
+  const cx = 80;
+  const cy = 80;
+  const rIn = 53;
+  const rOut = 58;
+  const rText = 70;
+
+  const yearLabels = ["Ａ", "２", "３", "４", "５", "６", "７", "８", "９", "10", "Ｊ", "Ｑ", "Ｋ"];
+
+  for (let i = 0; i < count; i++) {
+    const angleDeg = (360 / count) * i - 90;
+    const angleRad = (angleDeg * Math.PI) / 180;
+
+    const x1 = cx + rIn * Math.cos(angleRad);
+    const y1 = cy + rIn * Math.sin(angleRad);
+    const x2 = cx + rOut * Math.cos(angleRad);
+    const y2 = cy + rOut * Math.sin(angleRad);
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x1);
+    line.setAttribute("y1", y1);
+    line.setAttribute("x2", x2);
+    line.setAttribute("y2", y2);
+
+    const tickLimitPct = (i / count) * 100;
+    const isActive = (tickLimitPct <= activePct && activePct > 0);
+
+    let activeColor = color;
+    if (type === "year" && isActive) {
+      activeColor = cardColors[i];
+    }
+
+    if (isActive) {
+      line.setAttribute("stroke", activeColor);
+      line.setAttribute("stroke-width", count === 60 ? "1.5" : "2.5");
+    } else {
+      line.setAttribute("stroke", "#cbd5e1");
+      line.setAttribute("stroke-width", "1");
+    }
+    g.appendChild(line);
+
+    if (type === "year") {
+      const textVal = yearLabels[i];
+      const tx = cx + rText * Math.cos(angleRad);
+      const ty = cy + rText * Math.sin(angleRad) + 3.5;
+
+      const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      txt.setAttribute("x", tx);
+      txt.setAttribute("y", ty);
+      txt.setAttribute("text-anchor", "middle");
+      txt.setAttribute("font-size", "10px");
+      txt.setAttribute("font-weight", "900");
+      txt.setAttribute("fill", isActive ? activeColor : "#94a3b8");
+      txt.textContent = textVal;
+      g.appendChild(txt);
+
+    } else if (type === "life") {
+      if (i % 10 === 0) {
+        const textVal = (i === 0) ? "60" : `${i}`;
+        const tx = cx + rText * Math.cos(angleRad);
+        const ty = cy + rText * Math.sin(angleRad) + 3.5;
+
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", tx);
+        txt.setAttribute("y", ty);
+        txt.setAttribute("text-anchor", "middle");
+        txt.setAttribute("font-size", "9px");
+        txt.setAttribute("font-weight", "900");
+        txt.setAttribute("fill", isActive ? activeColor : "#94a3b8");
+        txt.textContent = textVal;
+        g.appendChild(txt);
+      }
+    }
+  }
+}
+
+// ドーナツ進捗＆データ同期
 function updateProgressBars(year, currentWeekIdx) {
   const now = new Date();
+  
+  // 1. 年間デック進捗
   let displayWeek = (currentWeekIdx >= 0) ? currentWeekIdx + 1 : (year < now.getFullYear() ? 52 : 0);
-  const pct = ((displayWeek / 52) * 100).toFixed(1);
-  const unreachedPct = (100 - (displayWeek / 52) * 100).toFixed(1);
+  const pct = parseFloat(((displayWeek / 52) * 100).toFixed(1));
   const remainWeeks = 52 - displayWeek;
 
-  document.getElementById("yearProgressText").textContent = `第${pad2(displayWeek)}週 (${pct}%)`;
-  document.getElementById("unreached-overlay").style.width = `${unreachedPct}%`;
-  document.getElementById("yearElapsedSub").textContent = `経過: ${displayWeek}週`;
-  document.getElementById("yearRemainSub").textContent = `残り: ${remainWeeks}週`;
+  drawProgressSlices("yearSlices", 13, pct, "year");
 
+  const blockIdx = Math.min(12, Math.floor((displayWeek - 1) / 4));
+  const currentBlockColor = cardColors[blockIdx];
+
+  drawProgressTicksAndLabels("yearTicks", 13, pct, currentBlockColor, "year");
+
+  document.getElementById("yearProgressText").textContent = `第${pad2(displayWeek)}週 (${pct}%)`;
+  document.getElementById("yearElapsedSub").textContent = `経過:${displayWeek}週`;
+  document.getElementById("yearRemainSub").textContent = `残り:${remainWeeks}週`;
+
+  // 2. 人生カウントダウン
   const birth = new Date(1969, 8, 28);
   const target = new Date(2029, 8, 28);
   const totalDays = (target - birth) / (1000 * 60 * 60 * 24);
   const remainDays = Math.max(0, Math.ceil((target - now) / (1000 * 60 * 60 * 24)));
   const elapsedDays = totalDays - remainDays;
-  const lifePct = Math.min(100, Math.max(0, ((elapsedDays / totalDays) * 100))).toFixed(1);
+  const lifePct = parseFloat(Math.min(100, Math.max(0, ((elapsedDays / totalDays) * 100))).toFixed(1));
 
+  drawProgressSlices("lifeSlices", 60, lifePct, "life");
+  drawProgressTicksAndLabels("lifeTicks", 60, lifePct, "#10b981", "life");
+
+  document.getElementById("lifeProgressText").textContent = `残り ${remainDays.toLocaleString()} 日`;
   const rWeeks = Math.floor(remainDays / 7);
   const decks = Math.floor(rWeeks / 52);
   const remW = rWeeks % 52;
 
-  document.getElementById("lifeProgressText").textContent = `残り ${remainDays.toLocaleString()} 日`;
-  document.getElementById("lifeProgressBar").style.width = `${lifePct}%`;
-  document.getElementById("lifeWeekSub").textContent = `残り: ${rWeeks} 週`;
-  document.getElementById("lifeCardSub").textContent = `手札: ${decks}組＋${remW}週`;
+  document.getElementById("lifeWeekSub").textContent = `残り:${rWeeks}週`;
+  document.getElementById("lifeCardSub").textContent = `手札:${decks}組+${remW}週`;
 }
 
 function buildTable(year) {
   const tbody = document.getElementById("calBody");
+  if (!tbody) return;
   tbody.innerHTML = "";
 
   const startMonday = getFirstMondayOfYear(year);
@@ -909,7 +1152,6 @@ function buildTable(year) {
         tdDay.appendChild(lbl);
         tdDay.appendChild(content);
 
-        // 保存された記録を描画
         if (recordStore[dateKey]) {
           renderDayCell(tdDay, recordStore[dateKey]);
         }
@@ -942,19 +1184,15 @@ function buildTable(year) {
       tdMemo.style.color = "var(--text-primary)";
       tdMemo.textContent = memoStore[memoKey] || "";
 
-      // メモ入力時に自動保存
       tdMemo.addEventListener("input", () => {
         memoStore[memoKey] = tdMemo.textContent;
         saveMemoStore();
       });
 
       tr.appendChild(tdMemo);
-
       tbody.appendChild(tr);
 
-      // 週集計初期化
       updateWeekSummary(wIdx);
-
       currentWeekIndex++;
     }
   });
@@ -1087,7 +1325,6 @@ document.getElementById("btnModalSave").addEventListener("click", () => {
     orders: { ...currentTempOrders }
   };
 
-  // ★ LocalStorageに自動保存
   saveRecordStore();
 
   renderDayCell(currentTargetCell, recordStore[dateKey]);
@@ -1097,6 +1334,7 @@ document.getElementById("btnModalSave").addEventListener("click", () => {
 
 function renderDayCell(td, record) {
   const content = td.querySelector(".day-content");
+  if (!content) return;
   content.innerHTML = "";
 
   if (record.isRest) {
@@ -1162,7 +1400,7 @@ function updateWeekSummary(wIdx) {
   if (targetCost) targetCost.textContent = weekCost > 0 ? `¥${weekCost.toLocaleString()}` : "";
 }
 
-/* メニュー設定モーダル */
+/* 設定モーダル */
 const settingsModal = document.getElementById("settingsModal");
 const settingTableBody = document.getElementById("settingTableBody");
 
@@ -1233,6 +1471,77 @@ document.getElementById("btnSettingsSave").addEventListener("click", () => {
 
   settingsModal.classList.remove("active");
 });
+
+
+/* ★★★ バックアップ（エクスポート＆インポート）の処理ロジック ★★★ */
+document.getElementById("btnExport").addEventListener("click", () => {
+  // LocalStorageから3種類のキーのデータを抽出し、1つのオブジェクトに統合
+  const exportData = {
+    records: recordStore,
+    memos: memoStore,
+    menu: DRINK_MENU
+  };
+
+  // Base64でエンコードして1行のコードに変換（JSONの改行やダブルクォートでエラーにならないため）
+  const jsonStr = JSON.stringify(exportData);
+  const encodedStr = btoa(unescape(encodeURIComponent(jsonStr)));
+
+  const textarea = document.getElementById("backupTextarea");
+  textarea.value = encodedStr;
+
+  // テキストエリアを選択してクリップボードに自動コピー
+  textarea.select();
+  textarea.setSelectionRange(0, 99999); // モバイル対応
+
+  try {
+    navigator.clipboard.writeText(encodedStr).then(() => {
+      alert("✅ カレンダーの全データをバックアップコードに変換し、クリップボードにコピーしました！テキストエリア内の文字列をメモ帳等に保存してください。");
+    });
+  } catch (err) {
+    // クリップボードAPIがセキュリティ制約等で弾かれた場合の代替処理
+    document.execCommand("copy");
+    alert("✅ データをバックアップコードに変換しました。テキストエリアを選択して全文コピーしてください。");
+  }
+});
+
+document.getElementById("btnImport").addEventListener("click", () => {
+  const textarea = document.getElementById("backupTextarea");
+  const code = textarea.value.trim();
+
+  if (!code) {
+    alert("❌ 復元するバックアップコード（文字列）をテキストエリアに入力してください。");
+    return;
+  }
+
+  const isConfirm = confirm("⚠️ 警告: バックアップデータを復元します。\n現在このブラウザに保存されているカレンダーの全データが上書きされます。よろしいですか？");
+  if (!isConfirm) return;
+
+  try {
+    // Base64コードをデコードしてパース
+    const decodedStr = decodeURIComponent(escape(atob(code)));
+    const importData = JSON.parse(decodedStr);
+
+    // データの整合性チェック
+    if (!importData.records || !importData.memos) {
+      throw new Error("データ構造が不正です");
+    }
+
+    // 各LocalStorageキーに上書き保存
+    localStorage.setItem("my_calendar_records", JSON.stringify(importData.records));
+    localStorage.setItem("my_calendar_memos", JSON.stringify(importData.memos));
+    if (importData.menu) {
+      localStorage.setItem("my_drink_menu", JSON.stringify(importData.menu));
+    }
+
+    alert("🎉 データの復元に成功しました！カレンダーを最新の状態で再ロードします。");
+    location.reload(); // 画面を強制リロードして適用
+
+  } catch (err) {
+    alert("❌ エラー: 入力されたバックアップコードを正しく読み込めませんでした。コードが途中で切れていないか、正しくコピーされているかご確認ください。");
+    console.error(err);
+  }
+});
+
 
 // 初期化
 const yearSelect = document.getElementById("yearSelect");
