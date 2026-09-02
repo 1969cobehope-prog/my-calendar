@@ -30,11 +30,11 @@
     --bg-card-q: #fdf4ff;
     --bg-card-k: #fdf2f8;
 
-    /* 東南西北の風バッジ用カラー */
+    /* 東南西北の風バッジ用カラー（西：青、北：オレンジ） */
     --color-wind-ton: #16a34a; /* 東：緑 */
     --color-wind-nan: #dc2626; /* 南：赤 */
-    --color-wind-sha: #d97706; /* 西：金・橙 */
-    --color-wind-pei: #2563eb; /* 北：青 */
+    --color-wind-sha: #2563eb; /* 西：青 */
+    --color-wind-pei: #ea580c; /* 北：オレンジ */
   }
 
   * {
@@ -221,7 +221,7 @@
     border-collapse: separate;
     border-spacing: 0;
     width: 100%;
-    min-width: 900px;
+    min-width: 800px;
     font-size: 11px;
   }
 
@@ -241,9 +241,9 @@
 
   /* DECK・週番号を左端にSticky固定 */
   .sticky-left-season { position: sticky; left: 0; z-index: 5; }
-  .sticky-left-week   { position: sticky; left: 36px; z-index: 5; border-right: 2px solid #94a3b8 !important; }
+  .sticky-left-week   { position: sticky; left: 40px; z-index: 5; border-right: 2px solid #94a3b8 !important; }
   thead th.sticky-left-season { z-index: 15; left: 0; }
-  thead th.sticky-left-week   { z-index: 15; left: 36px; }
+  thead th.sticky-left-week   { z-index: 15; left: 40px; }
 
   td {
     padding: 4px;
@@ -289,30 +289,57 @@
     white-space: nowrap;
     vertical-align: middle;
     background: #ffffff;
-    padding: 4px 6px;
+    padding: 4px 2px;
   }
 
   td.sticky-left-week {
-    text-align: left !important;
-    padding-left: 8px !important;
+    text-align: center !important;
+    padding: 4px 2px !important;
   }
 
-  /* 東南西北のバッジデザイン */
+  /* 日付範囲（3行中央配置・インデント統一） */
+  .range-cell {
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 4px 1px !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Mono", monospace;
+    font-size: 9.5px;
+    line-height: 1.15;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+  }
+
+  .range-tilde {
+    font-size: 8px;
+    color: #94a3b8;
+    line-height: 1;
+    display: block;
+    margin: 1px 0;
+  }
+
+  /* 東南西北のバッジデザイン（スリム化） */
   .wind-badge {
     display: inline-block;
-    padding: 2px 5px;
-    border-radius: 4px;
-    font-size: 11px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 10px;
     font-weight: 900;
     color: #ffffff;
-    margin-right: 6px;
+    margin-right: 3px;
     text-align: center;
-    min-width: 22px;
+    min-width: 17px;
   }
   .wind-ton { background-color: var(--color-wind-ton); } /* 東 */
   .wind-nan { background-color: var(--color-wind-nan); } /* 南 */
   .wind-sha { background-color: var(--color-wind-sha); } /* 西 */
   .wind-pei { background-color: var(--color-wind-pei); } /* 北 */
+
+  /* 今週のテキスト強調 */
+  .week-text-current {
+    color: #0284c7 !important;
+    font-weight: 900 !important;
+  }
 
   .day-cell {
     min-width: 78px;
@@ -406,15 +433,6 @@
   tr.current-week-row {
     outline: 2px solid #0284c7;
     position: relative;
-  }
-  .now-badge {
-    background: #0284c7;
-    color: #fff;
-    font-size: 8px;
-    padding: 1px 4px;
-    border-radius: 3px;
-    margin-left: 2px;
-    font-weight: 800;
   }
 
   .memo-cell {
@@ -632,7 +650,7 @@
 
 <div class="container">
   <div class="dashboard-grid">
-    <!-- 左右横並び1：年間手札進捗カード（13分割パイチャート風） -->
+    <!-- 左右横並び1：年間手札進捗カード -->
     <div class="apple-card">
       <div class="card-header">
         <span class="card-label">Year Deck Progress</span>
@@ -640,11 +658,8 @@
       </div>
       <div class="ring-container">
         <svg class="progress-ring" width="160" height="160" id="yearSvg">
-          <!-- 背景土台 -->
           <circle class="ring-bg" stroke="#f1f5f9" stroke-width="12" fill="transparent" r="44" cx="80" cy="80"/>
-          <!-- 動的に塗り分けられる13セグメントパイチャート -->
           <g id="yearSlices"></g>
-          <!-- 外側13文字目盛り -->
           <g id="yearTicks"></g>
         </svg>
         <div class="ring-text" style="font-size: 24px; opacity: 0.15; padding-top: 4px;">🃏</div>
@@ -655,7 +670,7 @@
       </div>
     </div>
 
-    <!-- 左右横並び2：人生カウントダウンカード（60分割パイチャート風） -->
+    <!-- 左右横並び2：人生カウントダウンカード -->
     <div class="apple-card">
       <div class="card-header">
         <span class="card-label">Life Deck Progress</span>
@@ -664,9 +679,7 @@
       <div class="ring-container">
         <svg class="progress-ring" width="160" height="160" id="lifeSvg">
           <circle class="ring-bg" stroke="#f1f5f9" stroke-width="12" fill="transparent" r="44" cx="80" cy="80"/>
-          <!-- 動的に塗り分けられる60セグメントクロノグラフ -->
           <g id="lifeSlices"></g>
-          <!-- 外側60数値目盛り -->
           <g id="lifeTicks"></g>
         </svg>
         <div class="ring-text" style="font-size: 24px; opacity: 0.15; padding-top: 4px;">⏳</div>
@@ -683,9 +696,10 @@
       <table>
         <thead>
           <tr>
-            <th class="sticky-left-season" style="width: 44px;">DECK</th>
-            <th class="sticky-left-week" style="width: 95px;">週番号</th>
-            <th style="width: 80px;">日付範囲</th>
+            <th class="sticky-left-season" style="width: 40px;">DECK</th>
+            <th class="sticky-left-week" style="width: 60px;">週番号</th>
+            <!-- 日付範囲幅を42pxに最適化 -->
+            <th style="width: 42px;">日付<br>範囲</th>
             <th>月曜日</th>
             <th>火曜日</th>
             <th>水曜日</th>
@@ -704,7 +718,7 @@
     </div>
   </div>
 
-  <!-- ★最下部に追加：バックアップ・データ移行カード -->
+  <!-- 最下部：バックアップ・データ移行カード -->
   <div class="apple-card" style="margin-top: 14px; align-items: stretch; padding: 12px; border-radius: 10px;">
     <div class="card-label" style="text-align: left; margin-bottom: 6px;">💾 バックアップ & 端末間データ移行</div>
     <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600; line-height: 1.4;">
@@ -859,17 +873,9 @@ const weeksData = Array.from({length: 52}, (_, i) => {
   const windInfo = windCycle[i % 4];
   const windBadgeHtml = `<span class="wind-badge ${windInfo.cls}">${windInfo.char}</span>`;
   
-  let anno = "";
-  if (i === 11) anno = " (春分)";
-  else if (i === 17) anno = " (GW)";
-  else if (i === 25) anno = " (半期)";
-  else if (i === 32) anno = " (お盆)";
-  else if (i === 38) anno = " (秋分)";
-  else if (i === 51) anno = " (年末)";
-
   return { 
-    w: `${windBadgeHtml}第${pad2(i + 1)}週${anno}`,
-    rawText: `${windInfo.char} 第${pad2(i + 1)}週${anno}`
+    windHtml: windBadgeHtml,
+    weekNumText: `第${pad2(i + 1)}週`
   };
 });
 
@@ -884,25 +890,8 @@ let currentTargetCell = null;
 let currentTempOrders = {};
 let currentIsRest = false;
 
-// トランプ13ブロックカラー
-const cardColors = [
-  "#ef4444", // A: 赤
-  "#f97316", // 2: オレンジ
-  "#f59e0b", // 3: アンバー
-  "#eab308", // 4: イエロー
-  "#84cc16", // 5: ライム
-  "#10b981", // 6: エメラルド
-  "#06b6d4", // 7: シアン
-  "#0ea5e9", // 8: スカイ
-  "#3b82f6", // 9: ブルー
-  "#6366f1", // 10: インディゴ
-  "#8b5cf6", // J: バイオレット
-  "#d946ef", // Q: フクシャ
-  "#ec4899"  // K: ピンク
-];
-
-// 扇形スライス生成
-function drawProgressSlices(groupId, count, activePct, type) {
+// 扇形スライス生成（過去＝単色グレー、現在＝風の4分割、未来＝薄い白グレー）
+function drawProgressSlices(groupId, count, activePct, type, displayWeek = 0) {
   const g = document.getElementById(groupId);
   if (!g) return;
   g.innerHTML = "";
@@ -911,49 +900,95 @@ function drawProgressSlices(groupId, count, activePct, type) {
   const cy = 80;
   const r = 44;
   const strokeWidth = 12;
-  const circumference = 2 * Math.PI * r; // 276.46
-  
-  const segmentLength = circumference / count;
-  const gap = count === 60 ? 0.4 : 1.2;
-  const dashArray = `${segmentLength - gap} ${circumference - (segmentLength - gap)}`;
+  const circumference = 2 * Math.PI * r;
 
-  for (let i = 0; i < count; i++) {
-    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    circle.setAttribute("cx", cx);
-    circle.setAttribute("cy", cy);
-    circle.setAttribute("r", r);
-    circle.setAttribute("stroke-width", strokeWidth);
-    circle.setAttribute("fill", "transparent");
-    circle.setAttribute("stroke-dasharray", dashArray);
-    circle.setAttribute("stroke-dashoffset", -i * segmentLength);
-    circle.setAttribute("transform", "rotate(-90 80 80)");
+  if (type === "year") {
+    const cardCount = 13;
+    const cardLength = circumference / cardCount;
+    const cardGap = 1.2;
+    const activeCardIdx = (displayWeek > 0) ? Math.min(12, Math.floor((displayWeek - 1) / 4)) : -1;
+    const weekInCard = (displayWeek > 0) ? ((displayWeek - 1) % 4) + 1 : 0;
+    const windColors = ["#16a34a", "#dc2626", "#2563eb", "#ea580c"];
 
-    const limitPct = (i / count) * 100;
-    const isActive = (limitPct <= activePct && activePct > 0);
+    for (let c = 0; c < cardCount; c++) {
+      const cardOffset = -c * cardLength;
 
-    let strokeColor = "#cbd5e1";
+      if (c === activeCardIdx) {
+        // 現在進行中の月のみ4分割
+        const subLength = cardLength / 4;
+        const subGap = 0.4;
 
-    if (isActive) {
-      if (type === "year") {
-        strokeColor = cardColors[i];
+        for (let s = 0; s < 4; s++) {
+          const subCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          subCircle.setAttribute("cx", cx);
+          subCircle.setAttribute("cy", cy);
+          subCircle.setAttribute("r", r);
+          subCircle.setAttribute("stroke-width", strokeWidth);
+          subCircle.setAttribute("fill", "transparent");
+          subCircle.setAttribute("stroke-dasharray", `${subLength - subGap} ${circumference - (subLength - subGap)}`);
+          subCircle.setAttribute("stroke-dashoffset", cardOffset - s * subLength);
+          subCircle.setAttribute("transform", "rotate(-90 80 80)");
+
+          const isPassed = (s + 1 <= weekInCard);
+          subCircle.setAttribute("stroke", isPassed ? windColors[s] : "#f1f5f9");
+          g.appendChild(subCircle);
+        }
       } else {
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", cx);
+        circle.setAttribute("cy", cy);
+        circle.setAttribute("r", r);
+        circle.setAttribute("stroke-width", strokeWidth);
+        circle.setAttribute("fill", "transparent");
+        circle.setAttribute("stroke-dasharray", `${cardLength - cardGap} ${circumference - (cardLength - cardGap)}`);
+        circle.setAttribute("stroke-dashoffset", cardOffset);
+        circle.setAttribute("transform", "rotate(-90 80 80)");
+
+        if (c < activeCardIdx) {
+          circle.setAttribute("stroke", "#94a3b8");
+        } else {
+          circle.setAttribute("stroke", "#f1f5f9");
+        }
+        g.appendChild(circle);
+      }
+    }
+  } else {
+    // ライフ進捗（60分割クロノグラフ）
+    const segmentLength = circumference / count;
+    const gap = 0.4;
+    const dashArray = `${segmentLength - gap} ${circumference - (segmentLength - gap)}`;
+
+    for (let i = 0; i < count; i++) {
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", cx);
+      circle.setAttribute("cy", cy);
+      circle.setAttribute("r", r);
+      circle.setAttribute("stroke-width", strokeWidth);
+      circle.setAttribute("fill", "transparent");
+      circle.setAttribute("stroke-dasharray", dashArray);
+      circle.setAttribute("stroke-dashoffset", -i * segmentLength);
+      circle.setAttribute("transform", "rotate(-90 80 80)");
+
+      const limitPct = (i / count) * 100;
+      const isActive = (limitPct <= activePct && activePct > 0);
+
+      let strokeColor = "#f1f5f9";
+      if (isActive) {
         const t = i / 60;
         const redVal = Math.round(16 + (14 - 16) * t);
         const greenVal = Math.round(185 + (165 - 185) * t);
         const blueVal = Math.round(129 + (233 - 129) * t);
         strokeColor = `rgb(${redVal}, ${greenVal}, ${blueVal})`;
       }
-    } else {
-      strokeColor = "#f1f5f9";
-    }
 
-    circle.setAttribute("stroke", strokeColor);
-    g.appendChild(circle);
+      circle.setAttribute("stroke", strokeColor);
+      g.appendChild(circle);
+    }
   }
 }
 
 // 外側目盛り＆テキスト
-function drawProgressTicksAndLabels(groupId, count, activePct, color, type) {
+function drawProgressTicksAndLabels(groupId, count, activePct, color, type, activeCardIdx = -1) {
   const g = document.getElementById(groupId);
   if (!g) return;
   g.innerHTML = "";
@@ -981,35 +1016,51 @@ function drawProgressTicksAndLabels(groupId, count, activePct, color, type) {
     line.setAttribute("x2", x2);
     line.setAttribute("y2", y2);
 
-    const tickLimitPct = (i / count) * 100;
-    const isActive = (tickLimitPct <= activePct && activePct > 0);
+    const isCurrent = (type === "year" && i === activeCardIdx);
+    const isPast = (type === "year" && i < activeCardIdx);
 
-    let activeColor = color;
-    if (type === "year" && isActive) {
-      activeColor = cardColors[i];
-    }
-
-    if (isActive) {
-      line.setAttribute("stroke", activeColor);
-      line.setAttribute("stroke-width", count === 60 ? "1.5" : "2.5");
+    if (type === "year") {
+      if (isCurrent) {
+        line.setAttribute("stroke", "#0284c7");
+        line.setAttribute("stroke-width", "2.5");
+      } else if (isPast) {
+        line.setAttribute("stroke", "#94a3b8");
+        line.setAttribute("stroke-width", "1.5");
+      } else {
+        line.setAttribute("stroke", "#cbd5e1");
+        line.setAttribute("stroke-width", "1");
+      }
     } else {
-      line.setAttribute("stroke", "#cbd5e1");
-      line.setAttribute("stroke-width", "1");
+      const tickLimitPct = (i / count) * 100;
+      const isActive = (tickLimitPct <= activePct && activePct > 0);
+      line.setAttribute("stroke", isActive ? color : "#cbd5e1");
+      line.setAttribute("stroke-width", count === 60 ? "1.5" : "2.5");
     }
     g.appendChild(line);
 
     if (type === "year") {
       const textVal = yearLabels[i];
-      const tx = cx + rText * Math.cos(angleRad);
-      const ty = cy + rText * Math.sin(angleRad) + 3.5;
+      const textAngleDeg = angleDeg + (360 / count) * 0.5;
+      const textAngleRad = (textAngleDeg * Math.PI) / 180;
+
+      const tx = cx + rText * Math.cos(textAngleRad);
+      const ty = cy + rText * Math.sin(textAngleRad) + 3.5;
 
       const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
       txt.setAttribute("x", tx);
       txt.setAttribute("y", ty);
       txt.setAttribute("text-anchor", "middle");
-      txt.setAttribute("font-size", "10px");
+      txt.setAttribute("font-size", isCurrent ? "12px" : "10px");
       txt.setAttribute("font-weight", "900");
-      txt.setAttribute("fill", isActive ? activeColor : "#94a3b8");
+      
+      if (isCurrent) {
+        txt.setAttribute("fill", "#0284c7");
+      } else if (isPast) {
+        txt.setAttribute("fill", "#475569");
+      } else {
+        txt.setAttribute("fill", "#cbd5e1");
+      }
+      
       txt.textContent = textVal;
       g.appendChild(txt);
 
@@ -1025,7 +1076,9 @@ function drawProgressTicksAndLabels(groupId, count, activePct, color, type) {
         txt.setAttribute("text-anchor", "middle");
         txt.setAttribute("font-size", "9px");
         txt.setAttribute("font-weight", "900");
-        txt.setAttribute("fill", isActive ? activeColor : "#94a3b8");
+        const tickLimitPct = (i / count) * 100;
+        const isActive = (tickLimitPct <= activePct && activePct > 0);
+        txt.setAttribute("fill", isActive ? color : "#94a3b8");
         txt.textContent = textVal;
         g.appendChild(txt);
       }
@@ -1042,12 +1095,10 @@ function updateProgressBars(year, currentWeekIdx) {
   const pct = parseFloat(((displayWeek / 52) * 100).toFixed(1));
   const remainWeeks = 52 - displayWeek;
 
-  drawProgressSlices("yearSlices", 13, pct, "year");
+  drawProgressSlices("yearSlices", 13, pct, "year", displayWeek);
 
-  const blockIdx = Math.min(12, Math.floor((displayWeek - 1) / 4));
-  const currentBlockColor = cardColors[blockIdx];
-
-  drawProgressTicksAndLabels("yearTicks", 13, pct, currentBlockColor, "year");
+  const activeCardIdx = (displayWeek > 0) ? Math.min(12, Math.floor((displayWeek - 1) / 4)) : -1;
+  drawProgressTicksAndLabels("yearTicks", 13, pct, "#94a3b8", "year", activeCardIdx);
 
   document.getElementById("yearProgressText").textContent = `第${pad2(displayWeek)}週 (${pct}%)`;
   document.getElementById("yearElapsedSub").textContent = `経過:${displayWeek}週`;
@@ -1113,7 +1164,8 @@ function buildTable(year) {
 
       const tdW = document.createElement("td");
       tdW.className = "week-cell sticky-left-week";
-      tdW.innerHTML = data.w + (isCurrentWeek ? '<span class="now-badge">今週</span>' : '');
+      const weekClass = isCurrentWeek ? "week-text-current" : "";
+      tdW.innerHTML = `${data.windHtml}<span class="${weekClass}">${data.weekNumText}</span>`;
       tr.appendChild(tdW);
 
       const m1 = pad2(weekMon.getMonth() + 1);
@@ -1121,10 +1173,10 @@ function buildTable(year) {
       const m2 = pad2(weekSun.getMonth() + 1);
       const d2 = pad2(weekSun.getDate());
 
+      // ★ 日付範囲：3行構成（日付、ニョロ、日付）でセンタリング
       const tdRange = document.createElement("td");
-      tdRange.className = "week-cell";
-      tdRange.style.fontSize = "10px";
-      tdRange.textContent = `${m1}/${d1}〜${m2}/${d2}`;
+      tdRange.className = "range-cell";
+      tdRange.innerHTML = `<div>${m1}/${d1}</div><span class="range-tilde">〜</span><div>${m2}/${d2}</div>`;
       tr.appendChild(tdRange);
 
       for (let d = 0; d < 7; d++) {
@@ -1473,32 +1525,28 @@ document.getElementById("btnSettingsSave").addEventListener("click", () => {
 });
 
 
-/* ★★★ バックアップ（エクスポート＆インポート）の処理ロジック ★★★ */
+/* ★★★ バックアップ処理 ★★★ */
 document.getElementById("btnExport").addEventListener("click", () => {
-  // LocalStorageから3種類のキーのデータを抽出し、1つのオブジェクトに統合
   const exportData = {
     records: recordStore,
     memos: memoStore,
     menu: DRINK_MENU
   };
 
-  // Base64でエンコードして1行のコードに変換（JSONの改行やダブルクォートでエラーにならないため）
   const jsonStr = JSON.stringify(exportData);
   const encodedStr = btoa(unescape(encodeURIComponent(jsonStr)));
 
   const textarea = document.getElementById("backupTextarea");
   textarea.value = encodedStr;
 
-  // テキストエリアを選択してクリップボードに自動コピー
   textarea.select();
-  textarea.setSelectionRange(0, 99999); // モバイル対応
+  textarea.setSelectionRange(0, 99999);
 
   try {
     navigator.clipboard.writeText(encodedStr).then(() => {
       alert("✅ カレンダーの全データをバックアップコードに変換し、クリップボードにコピーしました！テキストエリア内の文字列をメモ帳等に保存してください。");
     });
   } catch (err) {
-    // クリップボードAPIがセキュリティ制約等で弾かれた場合の代替処理
     document.execCommand("copy");
     alert("✅ データをバックアップコードに変換しました。テキストエリアを選択して全文コピーしてください。");
   }
@@ -1517,16 +1565,13 @@ document.getElementById("btnImport").addEventListener("click", () => {
   if (!isConfirm) return;
 
   try {
-    // Base64コードをデコードしてパース
     const decodedStr = decodeURIComponent(escape(atob(code)));
     const importData = JSON.parse(decodedStr);
 
-    // データの整合性チェック
     if (!importData.records || !importData.memos) {
       throw new Error("データ構造が不正です");
     }
 
-    // 各LocalStorageキーに上書き保存
     localStorage.setItem("my_calendar_records", JSON.stringify(importData.records));
     localStorage.setItem("my_calendar_memos", JSON.stringify(importData.memos));
     if (importData.menu) {
@@ -1534,14 +1579,13 @@ document.getElementById("btnImport").addEventListener("click", () => {
     }
 
     alert("🎉 データの復元に成功しました！カレンダーを最新の状態で再ロードします。");
-    location.reload(); // 画面を強制リロードして適用
+    location.reload();
 
   } catch (err) {
     alert("❌ エラー: 入力されたバックアップコードを正しく読み込めませんでした。コードが途中で切れていないか、正しくコピーされているかご確認ください。");
     console.error(err);
   }
 });
-
 
 // 初期化
 const yearSelect = document.getElementById("yearSelect");
