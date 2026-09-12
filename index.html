@@ -209,7 +209,7 @@
     border-collapse: separate;
     border-spacing: 0;
     width: 100%;
-    min-width: 850px;
+    min-width: 960px;
     font-size: 11px;
     table-layout: fixed;
   }
@@ -266,7 +266,7 @@
     border-bottom: 1px solid #cbd5e1;
   }
 
-  /* 白ブロック（手札A, 3, 5, 7, 9, J, K） */
+  /* 白ブロック */
   tr.deck-stripe-white {
     background-color: var(--deck-stripe-white);
   }
@@ -277,7 +277,7 @@
     background-color: #ffffff;
   }
 
-  /* グレーブロック（手札2, 4, 6, 8, 10, Q） */
+  /* グレーブロック */
   tr.deck-stripe-gray {
     background-color: var(--deck-stripe-gray);
   }
@@ -286,6 +286,23 @@
   tr.deck-stripe-gray td.range-cell,
   tr.deck-stripe-gray td.day-weekday {
     background-color: #f1f5f9;
+  }
+
+  /* DECK小計行のスタイル */
+  tr.deck-total-row {
+    background-color: #e2e8f0 !important;
+    font-weight: 800;
+  }
+  tr.deck-total-row td {
+    border-bottom: 2px solid #94a3b8 !important;
+    background-color: #e2e8f0 !important;
+    padding: 6px 4px;
+  }
+  tr.deck-total-row td.deck-total-label {
+    text-align: center;
+    font-size: 10px;
+    color: #1e293b;
+    border-right: 2px solid #94a3b8 !important;
   }
 
   /* DECKセル：直立する縦書き */
@@ -350,12 +367,11 @@
     text-align: center;
     min-width: 17px;
   }
-  .wind-ton { background-color: var(--color-wind-ton); } /* 東 */
-  .wind-nan { background-color: var(--color-wind-nan); } /* 南 */
-  .wind-sha { background-color: var(--color-wind-sha); } /* 西 */
-  .wind-pei { background-color: var(--color-wind-pei); } /* 北 */
+  .wind-ton { background-color: var(--color-wind-ton); }
+  .wind-nan { background-color: var(--color-wind-nan); }
+  .wind-sha { background-color: var(--color-wind-sha); }
+  .wind-pei { background-color: var(--color-wind-pei); }
 
-  /* 今週のテキスト強調 */
   .week-text-current {
     color: #0284c7 !important;
     font-weight: 900 !important;
@@ -442,8 +458,21 @@
     text-align: center;
     font-weight: 700;
     vertical-align: middle;
-    font-size: 11px;
+    font-size: 10.5px;
     background: transparent;
+  }
+
+  .order-stat-pill {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 3px;
+    font-size: 8.5px;
+    font-weight: 700;
+    margin: 1px;
+    line-height: 1.2;
   }
 
   .alc-val { color: #d97706; font-weight: 800; }
@@ -727,10 +756,11 @@
             <th style="min-width: 80px;">金曜日</th>
             <th class="sat-col" style="min-width: 80px; color: #60a5fa;">土曜日</th>
             <th class="sun-col" style="min-width: 80px; color: #f87171;">日曜日</th>
-            <th style="width: 45px;">休肝</th>
-            <th style="width: 65px;">純アル</th>
-            <th style="width: 65px;">酒代</th>
-            <th style="width: 100px;">メモ</th>
+            <th style="width: 42px;">休肝</th>
+            <th style="width: 95px;">飲酒内訳</th>
+            <th style="width: 60px;">純アル</th>
+            <th style="width: 68px;">酒代</th>
+            <th style="width: 90px;">メモ</th>
           </tr>
         </thead>
         <tbody id="calBody"></tbody>
@@ -893,9 +923,9 @@ const weeksData = Array.from({length: 52}, (_, i) => {
   const windInfo = windCycle[i % 4];
   const windBadgeHtml = `<span class="wind-badge ${windInfo.cls}">${windInfo.char}</span>`;
   
-  const cardIdx = Math.floor(i / 4); // 0〜12
-  const step = (i % 4) + 1;          // 手札内週 (1〜4)
-  const baseWeeks = cardIdx * 4;     // 前の手札までの消化週数
+  const cardIdx = Math.floor(i / 4);
+  const step = (i % 4) + 1;
+  const baseWeeks = cardIdx * 4;
   
   return { 
     windHtml: windBadgeHtml,
@@ -1237,21 +1267,33 @@ function buildTable(year) {
         tr.appendChild(tdDay);
       }
 
+      // 休肝日数
       const tdRest = document.createElement("td");
       tdRest.id = `rest-stat-${wIdx}`;
       tdRest.className = "stat-cell";
       tr.appendChild(tdRest);
 
+      // 個別ドリンク内訳合計
+      const tdOrderList = document.createElement("td");
+      tdOrderList.id = `order-stat-${wIdx}`;
+      tdOrderList.className = "stat-cell";
+      tdOrderList.style.textAlign = "left";
+      tdOrderList.style.padding = "2px 4px";
+      tr.appendChild(tdOrderList);
+
+      // 純アルコール量
       const tdAlc = document.createElement("td");
       tdAlc.id = `alc-stat-${wIdx}`;
       tdAlc.className = "stat-cell alc-val";
       tr.appendChild(tdAlc);
 
+      // 酒代合計
       const tdCost = document.createElement("td");
       tdCost.id = `cost-stat-${wIdx}`;
       tdCost.className = "stat-cell cost-val";
       tr.appendChild(tdCost);
 
+      // 週メモ
       const memoKey = `${year}-w${wIdx}`;
       const tdMemo = document.createElement("td");
       tdMemo.contentEditable = "true";
@@ -1272,6 +1314,58 @@ function buildTable(year) {
       updateWeekSummary(wIdx);
       currentWeekIndex++;
     }
+
+    // ★★★ DECK（4週間）ごとの小計行を追加 ★★★
+    const trDeckTotal = document.createElement("tr");
+    trDeckTotal.className = "deck-total-row";
+
+    // 左3列（DECK・週番号・日付範囲）を横断する小計ラベル
+    const tdDeckLabel = document.createElement("td");
+    tdDeckLabel.className = "deck-total-label sticky-left-season";
+    tdDeckLabel.colSpan = 3;
+    tdDeckLabel.innerHTML = `📊 <b>${block.name} 計 (4週)</b>`;
+    trDeckTotal.appendChild(tdDeckLabel);
+
+    // 月〜日（7曜日分）の空セル
+    for (let c = 0; c < 7; c++) {
+      const tdEmpty = document.createElement("td");
+      tdEmpty.style.backgroundColor = "#e2e8f0";
+      trDeckTotal.appendChild(tdEmpty);
+    }
+
+    // 4週間の休肝日数小計
+    const tdDeckRest = document.createElement("td");
+    tdDeckRest.id = `deck-rest-${bIdx}`;
+    tdDeckRest.className = "stat-cell";
+    trDeckTotal.appendChild(tdDeckRest);
+
+    // 4週間の個別ドリンク内訳小計
+    const tdDeckOrders = document.createElement("td");
+    tdDeckOrders.id = `deck-orders-${bIdx}`;
+    tdDeckOrders.className = "stat-cell";
+    tdDeckOrders.style.textAlign = "left";
+    tdDeckOrders.style.padding = "2px 4px";
+    trDeckTotal.appendChild(tdDeckOrders);
+
+    // 4週間の純アルコール量小計
+    const tdDeckAlc = document.createElement("td");
+    tdDeckAlc.id = `deck-alc-${bIdx}`;
+    tdDeckAlc.className = "stat-cell alc-val";
+    trDeckTotal.appendChild(tdDeckAlc);
+
+    // 4週間の酒代小計
+    const tdDeckCost = document.createElement("td");
+    tdDeckCost.id = `deck-cost-${bIdx}`;
+    tdDeckCost.className = "stat-cell cost-val";
+    trDeckTotal.appendChild(tdDeckCost);
+
+    // メモ欄（空セル）
+    const tdDeckEmptyMemo = document.createElement("td");
+    tdDeckEmptyMemo.style.backgroundColor = "#e2e8f0";
+    trDeckTotal.appendChild(tdDeckEmptyMemo);
+
+    tbody.appendChild(trDeckTotal);
+    updateDeckSummary(bIdx);
   });
 
   updateProgressBars(year, activeCurrentWeek);
@@ -1395,7 +1489,8 @@ document.getElementById("btnModalCancel").addEventListener("click", () => {
 document.getElementById("btnModalSave").addEventListener("click", () => {
   if (!currentTargetCell) return;
   const dateKey = currentTargetCell.dataset.dateKey;
-  const wIdx = currentTargetCell.dataset.weekIdx;
+  const wIdx = parseInt(currentTargetCell.dataset.weekIdx, 10);
+  const bIdx = Math.floor(wIdx / 4);
 
   recordStore[dateKey] = {
     isRest: currentIsRest,
@@ -1406,6 +1501,7 @@ document.getElementById("btnModalSave").addEventListener("click", () => {
 
   renderDayCell(currentTargetCell, recordStore[dateKey]);
   updateWeekSummary(wIdx);
+  updateDeckSummary(bIdx);
   modal.classList.remove("active");
 });
 
@@ -1444,11 +1540,13 @@ function renderDayCell(td, record) {
   }
 }
 
+// 週単位の集計
 function updateWeekSummary(wIdx) {
   const weekCells = document.querySelectorAll(`td.day-cell[data-week-idx="${wIdx}"]`);
   let restCount = 0;
   let weekAlc = 0;
   let weekCost = 0;
+  let orderTotals = {};
 
   weekCells.forEach(cell => {
     const key = cell.dataset.dateKey;
@@ -1458,10 +1556,13 @@ function updateWeekSummary(wIdx) {
         restCount++;
       } else {
         for (const [id, qty] of Object.entries(rec.orders)) {
-          const item = DRINK_MENU.find(m => m.id === id);
-          if (item) {
-            weekAlc += item.alc * qty;
-            weekCost += item.price * qty;
+          if (qty > 0) {
+            orderTotals[id] = (orderTotals[id] || 0) + qty;
+            const item = DRINK_MENU.find(m => m.id === id);
+            if (item) {
+              weekAlc += item.alc * qty;
+              weekCost += item.price * qty;
+            }
           }
         }
       }
@@ -1469,12 +1570,89 @@ function updateWeekSummary(wIdx) {
   });
 
   const targetRest = document.getElementById(`rest-stat-${wIdx}`);
+  const targetOrderList = document.getElementById(`order-stat-${wIdx}`);
   const targetAlc = document.getElementById(`alc-stat-${wIdx}`);
   const targetCost = document.getElementById(`cost-stat-${wIdx}`);
 
   if (targetRest) targetRest.textContent = restCount > 0 ? `${restCount}日` : "";
+  
+  if (targetOrderList) {
+    targetOrderList.innerHTML = "";
+    for (const [id, qty] of Object.entries(orderTotals)) {
+      const item = DRINK_MENU.find(m => m.id === id);
+      if (item && qty > 0) {
+        const span = document.createElement("span");
+        span.className = "order-stat-pill";
+        span.textContent = `${item.name.slice(0, 3)}×${qty}`;
+        targetOrderList.appendChild(span);
+      }
+    }
+  }
+
   if (targetAlc) targetAlc.textContent = weekAlc > 0 ? `${weekAlc.toFixed(1)}g` : "";
   if (targetCost) targetCost.textContent = weekCost > 0 ? `¥${weekCost.toLocaleString()}` : "";
+}
+
+// DECK（4週）単位の小計集計
+function updateDeckSummary(bIdx) {
+  let deckRest = 0;
+  let deckAlc = 0;
+  let deckCost = 0;
+  let deckOrderTotals = {};
+
+  const startWeek = bIdx * 4;
+  for (let w = startWeek; w < startWeek + 4; w++) {
+    const weekCells = document.querySelectorAll(`td.day-cell[data-week-idx="${w}"]`);
+    weekCells.forEach(cell => {
+      const key = cell.dataset.dateKey;
+      const rec = recordStore[key];
+      if (rec) {
+        if (rec.isRest) {
+          deckRest++;
+        } else {
+          for (const [id, qty] of Object.entries(rec.orders)) {
+            if (qty > 0) {
+              deckOrderTotals[id] = (deckOrderTotals[id] || 0) + qty;
+              const item = DRINK_MENU.find(m => m.id === id);
+              if (item) {
+                deckAlc += item.alc * qty;
+                deckCost += item.price * qty;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const targetRest = document.getElementById(`deck-rest-${bIdx}`);
+  const targetOrders = document.getElementById(`deck-orders-${bIdx}`);
+  const targetAlc = document.getElementById(`deck-alc-${bIdx}`);
+  const targetCost = document.getElementById(`deck-cost-${bIdx}`);
+
+  if (targetRest) targetRest.textContent = deckRest > 0 ? `${deckRest}日` : "-";
+  
+  if (targetOrders) {
+    targetOrders.innerHTML = "";
+    const keys = Object.keys(deckOrderTotals);
+    if (keys.length === 0) {
+      targetOrders.textContent = "-";
+    } else {
+      for (const [id, qty] of Object.entries(deckOrderTotals)) {
+        const item = DRINK_MENU.find(m => m.id === id);
+        if (item && qty > 0) {
+          const span = document.createElement("span");
+          span.className = "order-stat-pill";
+          span.style.background = "#cbd5e1";
+          span.textContent = `${item.name.slice(0, 3)}×${qty}`;
+          targetOrders.appendChild(span);
+        }
+      }
+    }
+  }
+
+  if (targetAlc) targetAlc.textContent = deckAlc > 0 ? `${deckAlc.toFixed(1)}g` : "-";
+  if (targetCost) targetCost.textContent = deckCost > 0 ? `¥${deckCost.toLocaleString()}` : "-";
 }
 
 /* 設定モーダル */
@@ -1541,6 +1719,7 @@ document.getElementById("btnSettingsSave").addEventListener("click", () => {
   renderOrderMenuGrid();
 
   for (let w = 0; w < 52; w++) { updateWeekSummary(w); }
+  for (let b = 0; b < 13; b++) { updateDeckSummary(b); }
   document.querySelectorAll(".day-cell").forEach(cell => {
     const key = cell.dataset.dateKey;
     if (recordStore[key]) renderDayCell(cell, recordStore[key]);
