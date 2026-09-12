@@ -19,7 +19,7 @@
     --deck-stripe-white: #ffffff;
     --deck-stripe-gray: #f1f5f9;
 
-    /* 東南西北の風バッジ用カラー（西：青、北：オレンジ） */
+    /* 東南西北の風バッジ用カラー */
     --color-wind-ton: #16a34a; /* 東：緑 */
     --color-wind-nan: #dc2626; /* 南：赤 */
     --color-wind-sha: #2563eb; /* 西：青 */
@@ -129,7 +129,6 @@
     justify-content: space-between;
   }
 
-  /* カードヘッダー */
   .card-header {
     width: 100%;
     display: flex;
@@ -155,7 +154,7 @@
     margin-top: 1px;
   }
 
-  /* 円グラフ用SVG＆コンテナスタイル（160px） */
+  /* 円グラフ用SVG＆コンテナスタイル */
   .ring-container {
     position: relative;
     width: 160px;
@@ -210,8 +209,9 @@
     border-collapse: separate;
     border-spacing: 0;
     width: 100%;
-    min-width: 800px;
+    min-width: 850px;
     font-size: 11px;
+    table-layout: fixed;
   }
 
   thead th {
@@ -228,13 +228,36 @@
     text-align: center;
   }
 
-  /* DECK・週番号・日付範囲を左端にSticky固定（日付範囲の右端でスクロール境界を作成） */
-  .sticky-left-season { position: sticky; left: 0; z-index: 5; }
-  .sticky-left-week   { position: sticky; left: 40px; z-index: 5; }
-  .sticky-left-range  { position: sticky; left: 100px; z-index: 5; border-right: 1.5px solid #94a3b8 !important; }
-  thead th.sticky-left-season { z-index: 15; left: 0; }
-  thead th.sticky-left-week   { z-index: 15; left: 40px; }
-  thead th.sticky-left-range  { z-index: 15; left: 100px; border-right: 1.5px solid #94a3b8 !important; }
+  /* DECK・週番号・日付範囲を左端にSticky固定 */
+  .sticky-left-season { 
+    position: sticky; 
+    left: 0px; 
+    width: 40px; 
+    min-width: 40px; 
+    max-width: 40px; 
+    z-index: 5; 
+  }
+  .sticky-left-week { 
+    position: sticky; 
+    left: 40px; 
+    width: 60px; 
+    min-width: 60px; 
+    max-width: 60px; 
+    z-index: 5; 
+  }
+  .sticky-left-range { 
+    position: sticky; 
+    left: 100px; 
+    width: 48px; 
+    min-width: 48px; 
+    max-width: 48px; 
+    z-index: 5; 
+    border-right: 2px solid #94a3b8 !important;
+  }
+
+  thead th.sticky-left-season { z-index: 20; left: 0px; }
+  thead th.sticky-left-week   { z-index: 20; left: 40px; }
+  thead th.sticky-left-range  { z-index: 20; left: 100px; border-right: 2px solid #94a3b8 !important; }
 
   td {
     padding: 4px;
@@ -249,6 +272,7 @@
   }
   tr.deck-stripe-white td.season-cell,
   tr.deck-stripe-white td.week-cell,
+  tr.deck-stripe-white td.range-cell,
   tr.deck-stripe-white td.day-weekday {
     background-color: #ffffff;
   }
@@ -259,6 +283,7 @@
   }
   tr.deck-stripe-gray td.season-cell,
   tr.deck-stripe-gray td.week-cell,
+  tr.deck-stripe-gray td.range-cell,
   tr.deck-stripe-gray td.day-weekday {
     background-color: #f1f5f9;
   }
@@ -321,7 +346,7 @@
     font-size: 10px;
     font-weight: 900;
     color: #ffffff;
-    margin-right: 3px;
+    margin-right: 2px;
     text-align: center;
     min-width: 17px;
   }
@@ -695,13 +720,13 @@
             <th class="sticky-left-season" style="width: 40px;">DECK</th>
             <th class="sticky-left-week" style="width: 60px;">週番号</th>
             <th class="sticky-left-range" style="width: 48px;">日付<br>範囲</th>
-            <th>月曜日</th>
-            <th>火曜日</th>
-            <th>水曜日</th>
-            <th>木曜日</th>
-            <th>金曜日</th>
-            <th class="sat-col" style="color: #60a5fa;">土曜日</th>
-            <th class="sun-col" style="color: #f87171;">日曜日</th>
+            <th style="min-width: 80px;">月曜日</th>
+            <th style="min-width: 80px;">火曜日</th>
+            <th style="min-width: 80px;">水曜日</th>
+            <th style="min-width: 80px;">木曜日</th>
+            <th style="min-width: 80px;">金曜日</th>
+            <th class="sat-col" style="min-width: 80px; color: #60a5fa;">土曜日</th>
+            <th class="sun-col" style="min-width: 80px; color: #f87171;">日曜日</th>
             <th style="width: 45px;">休肝</th>
             <th style="width: 65px;">純アル</th>
             <th style="width: 65px;">酒代</th>
@@ -863,14 +888,21 @@ const windCycle = [
   { char: "北", cls: "wind-pei" }
 ];
 
-// 52週データ
+// 52週データ（「第1週 +32」の形式）
 const weeksData = Array.from({length: 52}, (_, i) => {
   const windInfo = windCycle[i % 4];
   const windBadgeHtml = `<span class="wind-badge ${windInfo.cls}">${windInfo.char}</span>`;
   
+  const cardIdx = Math.floor(i / 4); // 0〜12
+  const step = (i % 4) + 1;          // 手札内週 (1〜4)
+  const baseWeeks = cardIdx * 4;     // 前の手札までの消化週数
+  
   return { 
     windHtml: windBadgeHtml,
-    weekNumText: `第${pad2(i + 1)}週`
+    weekNumText: `<div style="display:inline-block; vertical-align:middle; line-height:1.15;">` +
+                 `<span>第${step}週</span>` +
+                 `<div style="font-size:8.5px; opacity:0.75; font-weight:700;">+${baseWeeks}</div>` +
+                 `</div>`
   };
 });
 
@@ -1168,7 +1200,6 @@ function buildTable(year) {
 
       const tdRange = document.createElement("td");
       tdRange.className = "range-cell sticky-left-range";
-      tdRange.style.backgroundColor = (bIdx % 2 === 0) ? "#ffffff" : "#f1f5f9";
       tdRange.innerHTML = `<div>${m1}/${d1}</div><span class="range-tilde">〜</span><div>${m2}/${d2}</div>`;
       tr.appendChild(tdRange);
 
