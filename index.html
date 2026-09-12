@@ -228,11 +228,13 @@
     text-align: center;
   }
 
-  /* DECK・週番号を左端にSticky固定 */
+  /* DECK・週番号・日付範囲を左端にSticky固定（日付範囲の右端でスクロール境界を作成） */
   .sticky-left-season { position: sticky; left: 0; z-index: 5; }
-  .sticky-left-week   { position: sticky; left: 40px; z-index: 5; border-right: 1.5px solid #94a3b8 !important; }
+  .sticky-left-week   { position: sticky; left: 40px; z-index: 5; }
+  .sticky-left-range  { position: sticky; left: 100px; z-index: 5; border-right: 1.5px solid #94a3b8 !important; }
   thead th.sticky-left-season { z-index: 15; left: 0; }
   thead th.sticky-left-week   { z-index: 15; left: 40px; }
+  thead th.sticky-left-range  { z-index: 15; left: 100px; border-right: 1.5px solid #94a3b8 !important; }
 
   td {
     padding: 4px;
@@ -241,7 +243,6 @@
     border-bottom: 1px solid #cbd5e1;
   }
 
-  /* ★★★ ワンデッキ（4週）ごとの2色塗り（月〜金も完全連動） ★★★ */
   /* 白ブロック（手札A, 3, 5, 7, 9, J, K） */
   tr.deck-stripe-white {
     background-color: var(--deck-stripe-white);
@@ -283,6 +284,7 @@
     white-space: nowrap;
     vertical-align: middle;
     padding: 4px 2px;
+    border-right: 1px solid #cbd5e1;
   }
 
   td.sticky-left-week {
@@ -440,7 +442,7 @@
     box-shadow: inset 0 0 0 1.5px #0284c7;
   }
 
-  /* スマホ対応ボトムシート風モーダル */
+  /* モーダル */
   .modal-overlay {
     display: none;
     position: fixed;
@@ -644,7 +646,7 @@
 
 <div class="container">
   <div class="dashboard-grid">
-    <!-- 左右横並び1：年間手札進捗カード -->
+    <!-- 年間手札進捗カード -->
     <div class="apple-card">
       <div class="card-header">
         <span class="card-label">Year Deck Progress</span>
@@ -664,7 +666,7 @@
       </div>
     </div>
 
-    <!-- 左右横並び2：人生カウントダウンカード -->
+    <!-- 人生カウントダウンカード -->
     <div class="apple-card">
       <div class="card-header">
         <span class="card-label">Life Deck Progress</span>
@@ -692,7 +694,7 @@
           <tr>
             <th class="sticky-left-season" style="width: 40px;">DECK</th>
             <th class="sticky-left-week" style="width: 60px;">週番号</th>
-            <th style="width: 42px;">日付<br>範囲</th>
+            <th class="sticky-left-range" style="width: 48px;">日付<br>範囲</th>
             <th>月曜日</th>
             <th>火曜日</th>
             <th>水曜日</th>
@@ -1165,7 +1167,8 @@ function buildTable(year) {
       const d2 = pad2(weekSun.getDate());
 
       const tdRange = document.createElement("td");
-      tdRange.className = "range-cell";
+      tdRange.className = "range-cell sticky-left-range";
+      tdRange.style.backgroundColor = (bIdx % 2 === 0) ? "#ffffff" : "#f1f5f9";
       tdRange.innerHTML = `<div>${m1}/${d1}</div><span class="range-tilde">〜</span><div>${m2}/${d2}</div>`;
       tr.appendChild(tdRange);
 
@@ -1176,7 +1179,6 @@ function buildTable(year) {
         const isToday = (dateKey === todayKey);
 
         const tdDay = document.createElement("td");
-        // 月〜金（d < 5）に day-weekday クラスを付与して2色塗りに完全連動
         const dayTypeClass = (d === 5) ? 'sat-col' : (d === 6) ? 'sun-col' : 'day-weekday';
         tdDay.className = `day-cell ${dayTypeClass} ${isToday ? 'today-cell' : ''}`;
         tdDay.dataset.dateKey = dateKey;
@@ -1516,8 +1518,7 @@ document.getElementById("btnSettingsSave").addEventListener("click", () => {
   settingsModal.classList.remove("active");
 });
 
-
-/* ★★★ バックアップ処理 ★★★ */
+/* バックアップ処理 */
 document.getElementById("btnExport").addEventListener("click", () => {
   const exportData = {
     records: recordStore,
