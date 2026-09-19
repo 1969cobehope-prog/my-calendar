@@ -397,6 +397,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 2px;
   }
   .sat-lbl { color: #0284c7; font-weight: 800; }
   .sun-lbl { color: #dc2626; font-weight: 800; }
@@ -413,10 +414,13 @@
   .today-badge {
     background: #ef4444;
     color: #ffffff;
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 900;
-    padding: 1px 3px;
+    line-height: 1.2;
+    padding: 1px 2px;
     border-radius: 3px;
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 
   .day-content {
