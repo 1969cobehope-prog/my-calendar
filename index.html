@@ -228,36 +228,27 @@
     text-align: center;
   }
 
-  /* DECK・週番号・日付範囲を左端にSticky固定 */
-  .sticky-left-season { 
-    position: sticky; 
-    left: 0px; 
-    width: 40px; 
-    min-width: 40px; 
-    max-width: 40px; 
+  /* DECK・週情報を左端にSticky固定 */
+  .sticky-left-season {
+    position: sticky;
+    left: 0px;
+    width: 26px;
+    min-width: 26px;
+    max-width: 26px;
     z-index: 5; 
   }
-  .sticky-left-week { 
-    position: sticky; 
-    left: 40px; 
-    width: 60px; 
-    min-width: 60px; 
-    max-width: 60px; 
-    z-index: 5; 
-  }
-  .sticky-left-range { 
-    position: sticky; 
-    left: 100px; 
-    width: 48px; 
-    min-width: 48px; 
-    max-width: 48px; 
-    z-index: 5; 
+  .sticky-left-week {
+    position: sticky;
+    left: 26px;
+    width: 92px;
+    min-width: 92px;
+    max-width: 92px;
+    z-index: 5;
     border-right: 2px solid #94a3b8 !important;
   }
 
   thead th.sticky-left-season { z-index: 20; left: 0px; }
-  thead th.sticky-left-week   { z-index: 20; left: 40px; }
-  thead th.sticky-left-range  { z-index: 20; left: 100px; border-right: 2px solid #94a3b8 !important; }
+  thead th.sticky-left-week   { z-index: 20; left: 26px; border-right: 2px solid #94a3b8 !important; }
 
   td {
     padding: 4px;
@@ -272,7 +263,6 @@
   }
   tr.deck-stripe-white td.season-cell,
   tr.deck-stripe-white td.week-cell,
-  tr.deck-stripe-white td.range-cell,
   tr.deck-stripe-white td.day-weekday {
     background-color: #ffffff;
   }
@@ -283,7 +273,6 @@
   }
   tr.deck-stripe-gray td.season-cell,
   tr.deck-stripe-gray td.week-cell,
-  tr.deck-stripe-gray td.range-cell,
   tr.deck-stripe-gray td.day-weekday {
     background-color: #f1f5f9;
   }
@@ -326,7 +315,7 @@
     white-space: nowrap;
     vertical-align: middle;
     padding: 4px 2px;
-    border-right: 1px solid #cbd5e1;
+    border-right: 2px solid #94a3b8;
   }
 
   td.sticky-left-week {
@@ -334,25 +323,16 @@
     padding: 4px 2px !important;
   }
 
-  /* 日付範囲（3行中央配置） */
-  .range-cell {
+  /* 週番号の下に日付範囲を横一列で表示 */
+  .week-range {
     text-align: center !important;
-    vertical-align: middle !important;
-    padding: 4px 1px !important;
+    margin-top: 3px;
     font-family: -apple-system, BlinkMacSystemFont, "SF Mono", monospace;
     font-size: 9.5px;
     line-height: 1.15;
     font-weight: 700;
     color: #334155;
     white-space: nowrap;
-  }
-
-  .range-tilde {
-    font-size: 8px;
-    color: #94a3b8;
-    line-height: 1;
-    display: block;
-    margin: 1px 0;
   }
 
   /* 東南西北のバッジデザイン */
@@ -474,6 +454,12 @@
     outline: 2px solid #0284c7;
     position: relative;
     z-index: 1;
+  }
+
+  /* Stickyの週情報セルにも今週の青線をつなげる */
+  tr.current-week-row td.week-cell {
+    border-top: 2px solid #0284c7 !important;
+    border-bottom: 2px solid #0284c7 !important;
   }
 
   .memo-cell {
@@ -738,9 +724,8 @@
       <table>
         <thead>
           <tr>
-            <th class="sticky-left-season" style="width: 40px;">DECK</th>
-            <th class="sticky-left-week" style="width: 60px;">週番号</th>
-            <th class="sticky-left-range" style="width: 48px;">日付<br>範囲</th>
+            <th class="sticky-left-season" style="width: 26px;">札</th>
+            <th class="sticky-left-week" style="width: 92px;">週番号<br><span style="font-size:9px;">日付範囲</span></th>
             <th style="min-width: 80px;">月曜日</th>
             <th style="min-width: 80px;">火曜日</th>
             <th style="min-width: 80px;">水曜日</th>
@@ -885,19 +870,19 @@ loadMemoStore();
 
 // 季節ブロック ➔ トランプ13デックブロック
 const seasonBlocks = [
-  { name: "手札Ａ", span: 4 },
-  { name: "手札２", span: 4 },
-  { name: "手札３", span: 4 },
-  { name: "手札４", span: 4 },
-  { name: "手札５", span: 4 },
-  { name: "手札６", span: 4 },
-  { name: "手札７", span: 4 },
-  { name: "手札８", span: 4 },
-  { name: "手札９", span: 4 },
-  { name: "手札１０", span: 4 },
-  { name: "手札Ｊ", span: 4 },
-  { name: "手札Ｑ", span: 4 },
-  { name: "手札Ｋ", span: 4 }
+  { name: "Ａ札", span: 4 },
+  { name: "２札", span: 4 },
+  { name: "３札", span: 4 },
+  { name: "４札", span: 4 },
+  { name: "５札", span: 4 },
+  { name: "６札", span: 4 },
+  { name: "７札", span: 4 },
+  { name: "８札", span: 4 },
+  { name: "９札", span: 4 },
+  { name: "１０札", span: 4 },
+  { name: "Ｊ札", span: 4 },
+  { name: "Ｑ札", span: 4 },
+  { name: "Ｋ札", span: 4 }
 ];
 
 function pad2(n) { return n.toString().padStart(2, '0'); }
@@ -1212,18 +1197,13 @@ function buildTable(year) {
       const tdW = document.createElement("td");
       tdW.className = "week-cell sticky-left-week";
       const weekClass = isCurrentWeek ? "week-text-current" : "";
-      tdW.innerHTML = `${data.windHtml}<span class="${weekClass}">${data.weekNumText}</span>`;
-      tr.appendChild(tdW);
-
       const m1 = pad2(weekMon.getMonth() + 1);
       const d1 = pad2(weekMon.getDate());
       const m2 = pad2(weekSun.getMonth() + 1);
       const d2 = pad2(weekSun.getDate());
-
-      const tdRange = document.createElement("td");
-      tdRange.className = "range-cell sticky-left-range";
-      tdRange.innerHTML = `<div>${m1}/${d1}</div><span class="range-tilde">〜</span><div>${m2}/${d2}</div>`;
-      tr.appendChild(tdRange);
+      tdW.innerHTML = `${data.windHtml}<span class="${weekClass}">${data.weekNumText}</span>` +
+        `<div class="week-range">${m1}/${d1}〜${m2}/${d2}</div>`;
+      tr.appendChild(tdW);
 
       for (let d = 0; d < 7; d++) {
         const curDate = new Date(weekMon);
@@ -1310,10 +1290,10 @@ function buildTable(year) {
     const trDeckTotal = document.createElement("tr");
     trDeckTotal.className = "deck-total-row";
 
-    // 左3列（DECK・週番号・日付範囲）を横断する小計ラベル
+    // 左2列（DECK・週情報）を横断する小計ラベル
     const tdDeckLabel = document.createElement("td");
     tdDeckLabel.className = "deck-total-label sticky-left-season";
-    tdDeckLabel.colSpan = 3;
+    tdDeckLabel.colSpan = 2;
     tdDeckLabel.innerHTML = `📊 <b>${block.name} 計 (4週)</b>`;
     trDeckTotal.appendChild(tdDeckLabel);
 
