@@ -247,6 +247,25 @@
     border-right: 2px solid #94a3b8 !important;
   }
 
+  .sync-bar {
+    background: #f8fafc;
+    border-bottom: 1px solid var(--card-border);
+    padding: 7px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+  .sync-status[data-kind="ok"] { color: #15803d; }
+  .sync-status[data-kind="error"] { color: #b91c1c; }
+  .auth-form { padding: 16px; background: #f8fafc; }
+  .auth-form label { display: block; margin: 0 0 4px; font-size: 11px; font-weight: 800; }
+  .auth-form input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 16px; }
+  .auth-help { margin: 0 0 12px; color: var(--text-secondary); font-size: 11px; line-height: 1.5; }
+
   thead th.sticky-left-season { z-index: 20; left: 0px; }
   thead th.sticky-left-week   { z-index: 20; left: 26px; border-right: 2px solid #94a3b8 !important; }
 
@@ -675,6 +694,10 @@
     </select>
   </div>
 </header>
+<div class="sync-bar">
+  <span id="syncStatus" class="sync-status">☁️ 未ログイン（端末内に保存中）</span>
+  <button id="btnAuth" class="btn-settings-nav">ログイン</button>
+</div>
 
 <div class="container">
   <div class="dashboard-grid">
@@ -810,7 +833,35 @@
   </div>
 </div>
 
+<div id="authModal" class="modal-overlay">
+  <div class="pos-terminal">
+    <div class="pos-header"><h3>☁️ カレンダー同期</h3><span class="pos-date-badge">Supabase</span></div>
+    <form id="authForm" class="auth-form">
+      <p class="auth-help">PCとiPhoneで同じメールアドレス・パスワードを使うと、保存内容を同期できます。初めての方は「新規登録」を押してください。</p>
+      <label for="authEmail">メールアドレス</label>
+      <input id="authEmail" type="email" autocomplete="username" required>
+      <label for="authPassword">パスワード（6文字以上）</label>
+      <input id="authPassword" type="password" autocomplete="current-password" minlength="6" required>
+      <div id="authError" class="auth-help" style="color:#b91c1c; min-height:16px;"></div>
+      <div class="pos-actions">
+        <button type="button" id="btnAuthCancel" class="btn-apple btn-cancel">戻る</button>
+        <button type="button" id="btnSignUp" class="btn-apple btn-rest">新規登録</button>
+        <button type="submit" class="btn-apple btn-confirm">ログイン</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
+const SUPABASE_URL = "https://rmlidvulkqusalgzoabv.supabase.co";
+const SUPABASE_KEY = "sb_publishable_lLTwPU3NGZzYg5I-wQFdxQ_ftjnA0ok";
+const AUTH_STORAGE_KEY = "my_calendar_supabase_session";
+const MIGRATION_KEY_PREFIX = "my_calendar_migrated_";
+let cloudSession = null;
+let cloudSyncEnabled = false;
+let cloudSaveTimer = null;
+let cloudColumn = "state";
+
 const DEFAULT_DRINK_MENU = [
   { id: "beer_350",   name: "生ビール・缶", ml: 350, abv: 5.0,  price: 220 },
   { id: "beer_500",   name: "ロング缶",     ml: 500, abv: 5.0,  price: 290 },
@@ -850,6 +901,7 @@ function loadRecordStore() {
 }
 function saveRecordStore() {
   localStorage.setItem("my_calendar_records", JSON.stringify(recordStore));
+  scheduleCloudSave();
 }
 loadRecordStore();
 
@@ -865,8 +917,135 @@ function loadMemoStore() {
 }
 function saveMemoStore() {
   localStorage.setItem("my_calendar_memos", JSON.stringify(memoStore));
+  scheduleCloudSave();
 }
 loadMemoStore();
+
+function getCalendarState() {
+  return { records: recordStore, memos: memoStore, menu: DRINK_MENU };
+}
+
+function hasLocalCalendarData() {
+  return Object.keys(recordStore).length > 0 || Object.keys(memoStore).length > 0 || localStorage.getItem("my_drink_menu") !== null;
+}
+
+function setSyncStatus(message, kind = "") {
+  const el = document.getElementById("syncStatus");
+  el.textContent = message;
+  el.dataset.kind = kind;
+}
+
+async function supabaseRequest(path, options = {}, session = cloudSession) {
+  const headers = { apikey: SUPABASE_KEY, "Content-Type": "application/json", ...(options.headers || {}) };
+  if (session && session.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+  const response = await fetch(`${SUPABASE_URL}${path}`, { ...options, headers });
+  const text = await response.text();
+  let body = null;
+  try { body = text ? JSON.parse(text) : null; } catch (_) { body = text; }
+  if (!response.ok) throw new Error(body?.msg || body?.message || body?.error_description || `通信エラー (${response.status})`);
+  return body;
+}
+
+function saveSession(session) {
+  cloudSession = session;
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+}
+
+async function refreshSessionIfNeeded() {
+  if (!cloudSession?.refresh_token) return false;
+  if ((cloudSession.expires_at || 0) * 1000 > Date.now() + 60000) return true;
+  const refreshed = await supabaseRequest(`/auth/v1/token?grant_type=refresh_token`, {
+    method: "POST", body: JSON.stringify({ refresh_token: cloudSession.refresh_token })
+  }, null);
+  saveSession(refreshed);
+  return true;
+}
+
+async function readCloudState() {
+  await refreshSessionIfNeeded();
+  const rows = await supabaseRequest(`/rest/v1/calendar_state?user_id=eq.${encodeURIComponent(cloudSession.user.id)}&select=*`);
+  const row = rows?.[0];
+  if (!row) return null;
+  if (Object.prototype.hasOwnProperty.call(row, "data")) cloudColumn = "data";
+  else if (Object.prototype.hasOwnProperty.call(row, "state")) cloudColumn = "state";
+  return row[cloudColumn] || null;
+}
+
+async function writeCloudState() {
+  if (!cloudSyncEnabled || !cloudSession) return;
+  setSyncStatus("☁️ 同期中…");
+  await refreshSessionIfNeeded();
+  let lastError;
+  const columns = cloudColumn === "state" ? ["state", "data"] : ["data", "state"];
+  for (const column of columns) {
+    for (const includeTimestamp of [true, false]) {
+      const payload = { user_id: cloudSession.user.id, [column]: getCalendarState() };
+      if (includeTimestamp) payload.updated_at = new Date().toISOString();
+      try {
+        await supabaseRequest(`/rest/v1/calendar_state?on_conflict=user_id`, {
+          method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(payload)
+        });
+        cloudColumn = column;
+        setSyncStatus(`✅ 同期済み: ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`, "ok");
+        return;
+      } catch (error) {
+        lastError = error;
+        if (!/column|schema cache/i.test(error.message)) throw error;
+      }
+    }
+  }
+  throw lastError;
+}
+
+function scheduleCloudSave() {
+  if (!cloudSyncEnabled) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(() => {
+    cloudSaveTimer = null;
+    writeCloudState().catch(showSyncError);
+  }, 700);
+}
+
+function showSyncError(error) {
+  console.error(error);
+  setSyncStatus(`⚠️ 同期できません: ${error.message}`, "error");
+}
+
+function applyCalendarState(state) {
+  if (!state || typeof state !== "object") return;
+  recordStore = state.records && typeof state.records === "object" ? state.records : {};
+  memoStore = state.memos && typeof state.memos === "object" ? state.memos : {};
+  localStorage.setItem("my_calendar_records", JSON.stringify(recordStore));
+  localStorage.setItem("my_calendar_memos", JSON.stringify(memoStore));
+  if (Array.isArray(state.menu)) localStorage.setItem("my_drink_menu", JSON.stringify(state.menu));
+  loadDrinkMenu();
+  renderOrderMenuGrid();
+  buildTable(parseInt(document.getElementById("yearSelect").value, 10));
+}
+
+async function startCloudSync() {
+  setSyncStatus("☁️ クラウドを確認中…");
+  const cloudState = await readCloudState();
+  const migrationKey = `${MIGRATION_KEY_PREFIX}${cloudSession.user.id}`;
+  if (!localStorage.getItem(migrationKey) && hasLocalCalendarData()) {
+    const migrate = confirm("この端末に保存済みのカレンダーデータがあります。\n\n［OK］このデータをクラウドへ移して同期を開始\n［キャンセル］今回は移さず、端末内のデータをそのまま保持");
+    if (!migrate) {
+      cloudSyncEnabled = false;
+      setSyncStatus("☁️ ログイン中・移行は保留（端末内に保存中）");
+      return;
+    }
+    localStorage.setItem(migrationKey, "1");
+    cloudSyncEnabled = true;
+    await writeCloudState();
+  } else {
+    localStorage.setItem(migrationKey, "1");
+    cloudSyncEnabled = true;
+    if (cloudState) applyCalendarState(cloudState);
+    else await writeCloudState();
+  }
+  document.getElementById("btnAuth").textContent = "ログアウト";
+  setSyncStatus(`✅ ${cloudSession.user.email} と同期中`, "ok");
+}
 
 // 季節ブロック ➔ トランプ13デックブロック
 const seasonBlocks = [
@@ -1687,6 +1866,7 @@ document.getElementById("btnSettingsSave").addEventListener("click", () => {
 
   localStorage.setItem("my_drink_menu", JSON.stringify(newMenu));
   loadDrinkMenu();
+  scheduleCloudSave();
   renderOrderMenuGrid();
 
   for (let w = 0; w < 52; w++) { updateWeekSummary(w); }
@@ -1726,7 +1906,7 @@ document.getElementById("btnExport").addEventListener("click", () => {
   }
 });
 
-document.getElementById("btnImport").addEventListener("click", () => {
+document.getElementById("btnImport").addEventListener("click", async () => {
   const textarea = document.getElementById("backupTextarea");
   const code = textarea.value.trim();
 
@@ -1752,6 +1932,11 @@ document.getElementById("btnImport").addEventListener("click", () => {
       localStorage.setItem("my_drink_menu", JSON.stringify(importData.menu));
     }
 
+    recordStore = importData.records;
+    memoStore = importData.memos;
+    loadDrinkMenu();
+    if (cloudSyncEnabled) await writeCloudState();
+
     alert("🎉 データの復元に成功しました！カレンダーを最新の状態で再ロードします。");
     location.reload();
 
@@ -1759,6 +1944,82 @@ document.getElementById("btnImport").addEventListener("click", () => {
     alert("❌ エラー: 入力されたバックアップコードを正しく読み込めませんでした。コードが途中で切れていないか、正しくコピーされているかご確認ください。");
     console.error(err);
   }
+});
+
+/* ログインとクラウド同期 */
+const authModal = document.getElementById("authModal");
+const authError = document.getElementById("authError");
+
+document.getElementById("btnAuth").addEventListener("click", async () => {
+  if (cloudSession) {
+    if (!confirm("ログアウトしますか？端末内のデータは削除されません。")) return;
+    try { await supabaseRequest("/auth/v1/logout", { method: "POST" }); } catch (error) { console.warn(error); }
+    cloudSession = null;
+    cloudSyncEnabled = false;
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    document.getElementById("btnAuth").textContent = "ログイン";
+    setSyncStatus("☁️ 未ログイン（端末内に保存中）");
+    return;
+  }
+  authError.textContent = "";
+  authModal.classList.add("active");
+});
+
+document.getElementById("btnAuthCancel").addEventListener("click", () => authModal.classList.remove("active"));
+
+async function authenticate(mode) {
+  authError.textContent = "";
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  if (!email || password.length < 6) {
+    authError.textContent = "メールアドレスと6文字以上のパスワードを入力してください。";
+    return;
+  }
+  try {
+    const path = mode === "signup" ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password";
+    const result = await supabaseRequest(path, { method: "POST", body: JSON.stringify({ email, password }) }, null);
+    if (!result.access_token) {
+      authError.textContent = "確認メールを送信しました。メール内のリンクを開いてからログインしてください。";
+      return;
+    }
+    saveSession(result);
+    authModal.classList.remove("active");
+    document.getElementById("btnAuth").textContent = "ログアウト";
+    await startCloudSync();
+  } catch (error) {
+    authError.textContent = error.message;
+  }
+}
+
+document.getElementById("authForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  authenticate("login");
+});
+document.getElementById("btnSignUp").addEventListener("click", () => authenticate("signup"));
+
+async function restoreCloudSession() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || "null");
+    if (!saved) return;
+    cloudSession = saved;
+    await refreshSessionIfNeeded();
+    document.getElementById("btnAuth").textContent = "ログアウト";
+    await startCloudSync();
+  } catch (error) {
+    cloudSession = null;
+    cloudSyncEnabled = false;
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    showSyncError(error);
+  }
+}
+
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState !== "visible" || !cloudSyncEnabled || cloudSaveTimer) return;
+  try {
+    const state = await readCloudState();
+    if (state) applyCalendarState(state);
+    setSyncStatus(`✅ 同期済み: ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`, "ok");
+  } catch (error) { showSyncError(error); }
 });
 
 // 初期化
@@ -1771,6 +2032,7 @@ yearSelect.addEventListener("change", (e) => buildTable(parseInt(e.target.value,
 
 renderOrderMenuGrid();
 buildTable(parseInt(yearSelect.value, 10));
+restoreCloudSession();
 </script>
 
 </body>
